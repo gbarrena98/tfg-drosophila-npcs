@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 28
+  productGUID: ccd27abf267251318ef1c060884eedc3
+  companyName: German Barrena Alonso
+  productName: Drosophila Navigation Lab
+  defaultScreenWidth: 1440
+  defaultScreenHeight: 900
+  defaultIsNativeResolution: 0
+  runInBackground: 1
+  captureSingleScreen: 0
+  forceSingleInstance: 0
+  resizableWindow: 1
+  visibleInBackground: 1
+  allowFullscreenSwitch: 1
+  fullScreenMode: 3
+  bundleVersion: 0.2.0
+  activeInputHandler: 0

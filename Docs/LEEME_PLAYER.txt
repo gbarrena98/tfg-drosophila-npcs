@@ -1,0 +1,24 @@
+DROSOPHILA NAVIGATION LAB
+Prototipo PEC2 del TFG de Germán Barrena Alonso, UOC
+Versión 0.2.0-pec2
+
+Extraer todos los archivos del ZIP y abrir DrosophilaNavigationLab.exe.
+Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
+
+Configurar ensayo permite elegir tres escenarios, dos controladores o comparación.
+Enter inicia; Espacio o Esc pausa y continúa; R repite desde resultados.
+Los botones permiten cambiar vista, mostrar recorridos y detener con registro.
+En el escenario C la meta cambia a los 10 segundos de simulación.
+
+Al terminar se exportan configuración, sesión, resumen, trazas y eventos.
+Abrir carpeta CSV muestra los archivos de esa sesión. Los datos se guardan en
+la carpeta persistente del usuario, bajo Trials, fuera de esta instalación.
+
+PFL3 usa un modelo funcional publicado de 24 unidades. Los pesos auditados
+de FlyWire no intervienen en esta versión. Se conserva la limitación a 180 grados.
+Los casos incluidos son de desarrollo y no constituyen una evaluación final.
+
+Autor: Germán Barrena Alonso. Tutor: Daniel Hernández Palomeque.
+Modelo: Mussells Pires et al., Nature 626, 808-818 (2024).
+DOI: https://doi.org/10.1038/s41586-023-07006-3
+Se distribuye con LICENCIA.md, THIRD_PARTY_NOTICES.md y el aviso MIT de MaimonLab.

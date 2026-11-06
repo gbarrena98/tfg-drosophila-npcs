@@ -1,0 +1,55 @@
+{
+  "dataset": "FlyWire FAFB v783 via Shiu et al. public derived connectivity table",
+  "annotation_release": "v2.0.0",
+  "selection_column": "hemibrain_type",
+  "selection_types": [
+    "EPG",
+    "Delta7",
+    "FC2A",
+    "FC2B",
+    "FC2C",
+    "PFL3"
+  ],
+  "synapse_threshold": 1,
+  "source_neurons_annotations": 139255,
+  "source_directed_pairs": 15091983,
+  "source_synapse_count": 54492922,
+  "selected_neurons": 195,
+  "selected_directed_pairs": 4414,
+  "selected_synapse_count": 17944,
+  "neurons_by_type": {
+    "EPG": 47,
+    "Delta7": 40,
+    "FC2A": 16,
+    "FC2B": 28,
+    "FC2C": 40,
+    "PFL3": 24
+  },
+  "selected_ids_missing_from_connectivity": [],
+  "pfl3_total_input_synapses_source": 22765,
+  "pfl3_input_synapses_from_selected_subnetwork": 5808,
+  "pfl3_input_fraction_from_selected_subnetwork": 0.255128486712058,
+  "sources": {
+    "annotations_v2.0.0.tsv": {
+      "url": "https://raw.githubusercontent.com/flyconnectome/flywire_annotations/327ae7bdcc18c7a6a5ac014a4bfa9c7560fe854e/supplemental_files/Supplemental_file1_neuron_annotations.tsv",
+      "sha256": "5cbd94da723111ad8512fca3aeb93eeb22dd9682d93995c7f6a23f05f68cb0eb"
+    },
+    "Connectivity_783.parquet": {
+      "url": "https://raw.githubusercontent.com/philshiu/Drosophila_brain_model/91bdd1e7dcf193f3e7ca5a8933497fcef63b7960/Connectivity_783.parquet",
+      "sha256": "efeb23fb99098e9c390f6869969b2a121a2ee92c833cfc45ecb2c1d8e1af0347"
+    }
+  },
+  "warnings": [
+    "Model sign is supplied by the source simulation and is not a direct physiological measurement.",
+    "Annotation side is not an audited LAL output label.",
+    "This edge list is audited but is not used as the weight matrix of the functional reference model.",
+    "The selected induced subgraph omits all other inputs and outputs; it is not a closed biological circuit.",
+    "The source table does not provide synapse neuropil location or receptor-specific efficacy."
+  ],
+  "environment": {
+    "python": "3.12.14",
+    "pandas": "2.2.3",
+    "numpy": "2.3.5",
+    "pyarrow": "26.0.1"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "source_model": {
+    "citation": "Mussells Pires et al. Nature 626:808-818 (2024)",
+    "doi": "10.1038/s41586-023-07006-3",
+    "code_commit": "0a9d5f643d2ed63e4e02f3e3ffba9d70e19e21a2",
+    "file": "MATLAB/ModelLAL.m",
+    "a": 29.2282,
+    "b": 2.1736,
+    "c": -0.7011,
+    "d": 0.6299,
+    "left_heading_preferences_deg": [
+      67.5,
+      22.5,
+      -22.5,
+      -22.5,
+      -67.5,
+      -112.5,
+      -112.5,
+      -157.5,
+      157.5,
+      157.5,
+      112.5,
+      67.5
+    ],
+    "right_heading_preferences_deg": [
+      -67.5,
+      -112.5,
+      -157.5,
+      -157.5,
+      157.5,
+      112.5,
+      112.5,
+      67.5,
+      22.5,
+      22.5,
+      -22.5,
+      -67.5
+    ],
+    "goal_preferences_deg": [
+      -15,
+      -45,
+      -75,
+      -105,
+      -135,
+      -165,
+      -195,
+      -225,
+      -255,
+      -285,
+      -315,
+      -345
+    ]
+  },
+  "engineering_additions": {
+    "dt_s": 0.02,
+    "horizon_s": 10.0,
+    "tau_s": 0.1,
+    "turn_gain_deg_s_per_rate": 1.0,
+    "omega_max_deg_s": 120.0,
+    "proportional_gain_s_inv": 2.0,
+    "settle_deg": 2.0,
+    "dwell_s": 0.5
+  },
+  "weights_from_flywire_used_in_functional_model": false
+}

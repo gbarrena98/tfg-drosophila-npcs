@@ -1,0 +1,13 @@
+{
+  "scope": "Static project integrity and repository ignore rules; no Unity Editor execution",
+  "result": "Passed",
+  "uniqueAssetGuids": 110,
+  "savedDevelopmentConfigurations": 90,
+  "sourceAndReferenceHashesMatch": true,
+  "ignoreRulesChecked": true,
+  "workflowYamlParsed": true,
+  "workflowRunOnGithub": false,
+  "releasePackagingRejectsMissingPlayer": true,
+  "manualAcceptanceRows": 16,
+  "manualAcceptanceExecuted": false
+}

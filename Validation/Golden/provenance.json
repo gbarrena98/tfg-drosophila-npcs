@@ -1,0 +1,7 @@
+{
+  "source": "Block 1 executed Python reference",
+  "model_file_sha256": "7573bf6a687cd92f428815efd1c9929d6a182f7f60def562c53ac1d385782cc6",
+  "static_cases": 252,
+  "dynamic_rows": 3507,
+  "comparison_tolerance": 1e-07
+}

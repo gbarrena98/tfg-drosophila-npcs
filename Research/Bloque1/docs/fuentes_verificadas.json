@@ -1,0 +1,233 @@
+[
+  {
+    "id": 1,
+    "authors": "Colledanchise M, Ögren P",
+    "title": "Behavior Trees in Robotics and AI An Introduction",
+    "year": 2018,
+    "doi": "10.1201/9780429489105",
+    "url": "https://arxiv.org/abs/1709.00084",
+    "kind": "Libro y preprint de los autores",
+    "relevance": "Arquitecturas de selección de acciones; no equivalen a un controlador de giro",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 2,
+    "authors": "Dorkenwald S, Matsliah A, Sterling AR, et al.",
+    "title": "Neuronal wiring diagram of an adult brain",
+    "year": 2024,
+    "doi": "10.1038/s41586-024-07558-y",
+    "url": "https://www.nature.com/articles/s41586-024-07558-y",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Fuente de la reconstrucción FlyWire; no determina por sí sola la dinámica",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 3,
+    "authors": "Schlegel P, Yin Y, Bates AS, et al.",
+    "title": "Whole-brain annotation and multi-connectome cell typing of Drosophila",
+    "year": 2024,
+    "doi": "10.1038/s41586-024-07686-5",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11446831/",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Anotaciones de tipos y correspondencia entre conectomas; no intercambiar identificadores",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 4,
+    "authors": "Mussells Pires P, Zhang L, Parache V, et al.",
+    "title": "Converting an allocentric goal into an egocentric steering signal",
+    "year": 2024,
+    "doi": "10.1038/s41586-023-07006-3",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10881393/",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Modelo funcional principal; anatomía publicada del hemibrain, no pesos FlyWire nuevos",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 5,
+    "authors": "Westeinde EA, Kellogg E, Dawson PM, et al.",
+    "title": "Transforming a head direction signal into a goal-oriented steering command",
+    "year": 2024,
+    "doi": "10.1038/s41586-024-07039-2",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10881397/",
+    "kind": "Artículo revisado por pares corregido en 2025",
+    "relevance": "PFL3 y PFL2; ver corrección de líneas genéticas en referencia 20",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 6,
+    "authors": "Shiu PK, Sterne GR, Spiller N, et al.",
+    "title": "A Drosophila computational brain model reveals sensorimotor processing",
+    "year": 2024,
+    "doi": "10.1038/s41586-024-07763-9",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11446845/",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Modelo LIF a escala cerebral; alimentación y acicalamiento no navegación de NPCs",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 7,
+    "authors": "Jin Z, Zhu Y, Zhang C, Sui Y",
+    "title": "Whole-Brain Connectomic Graph Model Enables Whole-Body Locomotion Control in Fruit Fly",
+    "year": 2026,
+    "doi": "10.48550/arXiv.2602.17997",
+    "url": "https://arxiv.org/abs/2602.17997v3",
+    "kind": "Preprint arXiv v3 de 14 de junio de 2026",
+    "relevance": "Control corporal entrenado con RL; resultados declarados por sus autores",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 8,
+    "authors": "Princeton Neuroscience Institute",
+    "title": "Codex Connectome Data Explorer y FAQ",
+    "year": 2026,
+    "doi": "",
+    "url": "https://codex.flywire.ai/faq",
+    "kind": "Documentación oficial",
+    "relevance": "Exploración de conectomas y versiones; side es lado del soma",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 9,
+    "authors": "Reynolds CW",
+    "title": "Steering Behaviors For Autonomous Characters",
+    "year": 1999,
+    "doi": "",
+    "url": "https://www.red3d.com/cwr/steer/gdc99/",
+    "kind": "Artículo de conferencia publicado por el autor",
+    "relevance": "Separa selección de acciones, dirección del movimiento y locomoción",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 10,
+    "authors": "Hulse BK, Haberkern H, Franconville R, et al.",
+    "title": "A connectome of the Drosophila central complex reveals network motifs suitable for flexible navigation and context-dependent action selection",
+    "year": 2021,
+    "doi": "10.7554/eLife.66039",
+    "url": "https://elifesciences.org/articles/66039",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Organización conectómica del complejo central en hemibrain",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 11,
+    "authors": "Kim SS, Rouault H, Druckmann S, Jayaraman V",
+    "title": "Ring attractor dynamics in the Drosophila central brain",
+    "year": 2017,
+    "doi": "10.1126/science.aal4835",
+    "url": "https://www.janelia.org/publication/ring-attractor-dynamics-drosophila-central-brain",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Representación distribuida de orientación y atractor anular",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 12,
+    "authors": "Wang-Chen S, Stimpfling VA, Lam TKC, et al.",
+    "title": "NeuroMechFly v2 simulating embodied sensorimotor control in adult Drosophila",
+    "year": 2024,
+    "doi": "10.1038/s41592-024-02497-y",
+    "url": "https://www.nature.com/articles/s41592-024-02497-y",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Simulación sensorimotora y biomecánica; no presume un controlador conectómico",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 13,
+    "authors": "MaimonLab",
+    "title": "Converting_allo_goal_to_ego_steering",
+    "year": 2024,
+    "doi": "",
+    "url": "https://github.com/MaimonLab/Converting_allo_goal_to_ego_steering",
+    "kind": "Código de los autores con licencia MIT",
+    "relevance": "Parámetros y ángulos de ModelLAL.m; commit fijado en el manifiesto",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 14,
+    "authors": "Shiu PK y colaboradores",
+    "title": "Drosophila_brain_model",
+    "year": 2024,
+    "doi": "",
+    "url": "https://github.com/philshiu/Drosophila_brain_model",
+    "kind": "Código y tabla derivada de los autores",
+    "relevance": "Connectivity_783.parquet conserva conteos y signo asignado por el modelo",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 15,
+    "authors": "FlyConnectome y Schlegel P y colaboradores",
+    "title": "FlyWire neuron annotations version 2.0.0",
+    "year": 2024,
+    "doi": "",
+    "url": "https://github.com/flyconnectome/flywire_annotations/releases/tag/v2.0.0",
+    "kind": "Anotaciones versionadas de los autores",
+    "relevance": "Release basada principalmente en v783; coincidencia de IDs auditada",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 16,
+    "authors": "Unity Technologies",
+    "title": "AI Navigation package 2.0",
+    "year": 2026,
+    "doi": "",
+    "url": "https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html",
+    "kind": "Documentación oficial",
+    "relevance": "Navegación con NavMesh y obstáculos; distinta escala de comparación",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 17,
+    "authors": "Unity Technologies",
+    "title": "Unity ML Agents Toolkit",
+    "year": 2026,
+    "doi": "",
+    "url": "https://github.com/Unity-Technologies/ml-agents",
+    "kind": "Documentación oficial y software",
+    "relevance": "Entrenamiento por refuerzo e imitación; añade presupuesto de entrenamiento",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 18,
+    "authors": "Stone T, Webb B, Adden A, et al.",
+    "title": "An Anatomically Constrained Model for Path Integration in the Bee Brain",
+    "year": 2017,
+    "doi": "10.1016/j.cub.2017.08.052",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6196076/",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Antecedente de navegación bioinspirada en abejas con modelo de tasas",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 19,
+    "authors": "Wystrach A, Le Moël F, Clement L, Schwarz S",
+    "title": "Updating an allocentric goal from lateralised egocentric visual memories",
+    "year": 2026,
+    "doi": "10.1038/s41467-025-67545-3",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13096645/",
+    "kind": "Artículo revisado por pares",
+    "relevance": "Generación y actualización de metas en hormigas; no evidencia directa del circuito de Drosophila",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 20,
+    "authors": "Westeinde EA, Kellogg E, Dawson PM, et al.",
+    "title": "Author Correction Transforming a head direction signal into a goal oriented steering command",
+    "year": 2025,
+    "doi": "10.1038/s41586-024-08245-8",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11946882/",
+    "kind": "Corrección de los autores",
+    "relevance": "Corrige genotipo y etiqueta de una línea PFL2; no modifica aquí las ecuaciones reproducidas",
+    "access_date": "2026-11-03"
+  },
+  {
+    "id": 21,
+    "authors": "Neuroengineering Laboratory EPFL",
+    "title": "NeuroMechFly FlyGym documentation",
+    "year": 2026,
+    "doi": "",
+    "url": "https://neuromechfly.org/2.1.1/",
+    "kind": "Documentación oficial",
+    "relevance": "API 2.x introducida en abril de 2026; la versión del software debe fijarse",
+    "access_date": "2026-11-03"
+  }
+]

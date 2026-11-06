@@ -1,0 +1,15 @@
+{
+  "schemaVersion":"1",
+  "configurationId":"C-14",
+  "datasetRole":"development-pilot",
+  "scenario":2,
+  "index":14,
+  "seed":3214,
+  "start":{"x":5.785242909842132,"z":1.6029214886757408},
+  "goal":{"x":-5.634593259667727,"z":-2.0849145755319056},
+  "secondGoal":{"x":-4.653334749991675,"z":4.8318190885545285},
+  "initialHeading":-33.099084756018286,
+  "goalChangeSeconds":10,
+  "settings":{"dt":0.02,"arenaSize":20,"maxSeconds":60,"maxSpeed":1.5,"maxTurn":120,"arrivalRadius":0.5,"agentRadius":0.25,"proportionalGain":2,"pfl3Gain":1,"tau":0.1,"lookAhead":3,"clearance":0.2,"reorientDegrees":15,"reorientDwell":0.5},
+  "obstacles":[]
+}

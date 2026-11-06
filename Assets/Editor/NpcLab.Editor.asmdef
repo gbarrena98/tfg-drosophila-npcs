@@ -1,0 +1,19 @@
+{
+  "name": "NpcLab.Editor",
+  "rootNamespace": "NpcLab.Editor",
+  "references": [
+    "NpcLab.Core",
+    "NpcLab.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

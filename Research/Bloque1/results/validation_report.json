@@ -1,0 +1,113 @@
+{
+  "scope": "Angular bench of published PFL3 functional model; not a FlyWire-weighted neural simulation or Unity benchmark.",
+  "settings": {
+    "dt_s": 0.02,
+    "horizon_s": 10.0,
+    "tau_s": 0.1,
+    "turn_gain_deg_s_per_rate": 1.0,
+    "omega_max_deg_s": 120.0,
+    "proportional_gain_s_inv": 2.0,
+    "settle_deg": 2.0,
+    "dwell_s": 0.5
+  },
+  "python_version": "3.12.14",
+  "pilot_pfl3_cases": 7,
+  "static_cases": 1260,
+  "rotated_cases": 252,
+  "sensitivity_cases": 54,
+  "rate_bound": 62.651830152681086,
+  "checks": {
+    "all_seven_pfl3_cases_settle": true,
+    "all_states_finite": true,
+    "yaw_limit_respected": true,
+    "all_nonzero_static_signs_restore": true,
+    "theoretical_rate_bound_respected": true,
+    "all_rotated_cases_settle": true,
+    "all_sensitivity_cases_settle": true,
+    "exact_antipodes_retained_as_failures": true
+  },
+  "pilot_pfl3": [
+    {
+      "controller": "pfl3",
+      "initial_error_deg": -150,
+      "goal_deg": 0,
+      "final_abs_error_deg": 2.408452538927848e-13,
+      "mean_abs_error_deg": 12.98966089622699,
+      "settling_time_s": 2.06,
+      "max_abs_omega_deg_s": 120.0,
+      "max_rate": 60.30378897374441,
+      "finite": true
+    },
+    {
+      "controller": "pfl3",
+      "initial_error_deg": -90,
+      "goal_deg": 0,
+      "final_abs_error_deg": 2.495741648692336e-14,
+      "mean_abs_error_deg": 4.750323855686681,
+      "settling_time_s": 1.44,
+      "max_abs_omega_deg_s": 119.99305991451986,
+      "max_rate": 59.345977584765706,
+      "finite": true
+    },
+    {
+      "controller": "pfl3",
+      "initial_error_deg": -45,
+      "goal_deg": 0,
+      "final_abs_error_deg": 4.270612963457308e-15,
+      "mean_abs_error_deg": 2.035630256704005,
+      "settling_time_s": 1.1,
+      "max_abs_omega_deg_s": 72.95006769136957,
+      "max_rate": 51.99746858793965,
+      "finite": true
+    },
+    {
+      "controller": "pfl3",
+      "initial_error_deg": 0,
+      "goal_deg": 0,
+      "final_abs_error_deg": 7.53175299905706e-15,
+      "mean_abs_error_deg": 7.251514944073278e-15,
+      "settling_time_s": 0.0,
+      "max_abs_omega_deg_s": 2.842170943040401e-14,
+      "max_rate": 48.59604812508711,
+      "finite": true
+    },
+    {
+      "controller": "pfl3",
+      "initial_error_deg": 45,
+      "goal_deg": 0,
+      "final_abs_error_deg": 1.7295687677820352e-14,
+      "mean_abs_error_deg": 2.0356302567040157,
+      "settling_time_s": 1.1,
+      "max_abs_omega_deg_s": 72.95006769136957,
+      "max_rate": 51.99746858793965,
+      "finite": true
+    },
+    {
+      "controller": "pfl3",
+      "initial_error_deg": 90,
+      "goal_deg": 0,
+      "final_abs_error_deg": 3.181580890779552e-14,
+      "mean_abs_error_deg": 4.7503238556866885,
+      "settling_time_s": 1.44,
+      "max_abs_omega_deg_s": 119.99305991451985,
+      "max_rate": 59.345977584765706,
+      "finite": true
+    },
+    {
+      "controller": "pfl3",
+      "initial_error_deg": 150,
+      "goal_deg": 0,
+      "final_abs_error_deg": 2.5336788167333896e-13,
+      "mean_abs_error_deg": 12.989660896226999,
+      "settling_time_s": 2.06,
+      "max_abs_omega_deg_s": 120.0,
+      "max_rate": 60.30378897374441,
+      "finite": true
+    }
+  ],
+  "rotated_max_final_error_deg": 0.07820625811969252,
+  "source_code_sha256": {
+    "reference_model.py": "7573bf6a687cd92f428815efd1c9929d6a182f7f60def562c53ac1d385782cc6",
+    "validate_reference.py": "d40e6b47617d138adc6f1d5f00b9439941bcf200217f1e32197009de94e549f9"
+  }
+}

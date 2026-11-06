@@ -1,0 +1,47 @@
+# Unity-generated state. Assets and every .meta file ARE versioned.
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/MemoryCaptures/
+/Recordings/
+/Results/
+/Trials/
+/Release/*.zip
+/Release/*.sha256
+# Core harness compiler output
+**/bin/
+**/obj/
+# Editors and operating systems
+.vs/
+.idea/
+.vscode/
+*.sln
+*.slnx
+*.csproj.user
+*.suo
+*.user
+*.pidb
+*.booproj
+*.unityproj
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.bak
+__pycache__/
+*.py[cod]
+.venv/
+# Credentials and local Unity activation material
+.env
+.env.*
+*.ulf
+*.p12
+*.pfx
+*.pem
+*.key
+
