@@ -1,17 +1,17 @@
 ﻿id,entorno,accion,resultado_esperado,estado,fecha,version_unity,sistema,evidencia_observaciones
-U01,Editor,Importar el proyecto con la versión registrada,Sin errores de compilación ni referencias de scripts perdidas,PENDIENTE,,,,
-U02,Editor,Abrir la escena y entrar en Play,Título visible; botones legibles; shader sin color magenta,PENDIENTE,,,,
-U03,Editor,"Recorrer título, instrucciones, créditos y configuración",Navegación completa; ningún ensayo empieza antes de Iniciar,PENDIENTE,,,,
-U04,Editor,Ejecutar A-00 en comparación,Ambos agentes visibles por color y etiqueta; final por llegada,PENDIENTE,,,,
-U05,Editor,Pausar con Espacio durante dos segundos reales y continuar,Tiempo y posiciones no avanzan mientras dura la pausa,PENDIENTE,,,,
-U06,Editor,Repetir A-00 y alternar 1×/4×,Mismas métricas conductuales; solo cambia la duración real de presentación,PENDIENTE,,,,
-U07,Editor,Ejecutar B-00 y alternar vista y referencias,"Obstáculos, recorridos y referencias visibles; sin atravesar discos",PENDIENTE,,,,
-U08,Editor,Ejecutar C-00 a velocidad 1×,Espera ante primera meta y cambio a los 10 s; no termina antes,PENDIENTE,,,,
-U09,Editor,Cambiar rumbo por texto inválido y después por un número válido,Se informa del error sin perder configuración; el número válido inicia,PENDIENTE,,,,
-U10,Editor,Detener un ensayo y abrir su carpeta,"Estado Aborted; llegada vacía; configuración, eventos y trazas conservados",PENDIENTE,,,,
-U11,Editor,Ejecutar menú de comprobaciones del núcleo,Reporte unity_editor_core_checks.json con cero fallos,PENDIENTE,,,,
-U12,Editor,Cambiar tamaño de Game entre 1440×900 y 1920×1080,"Texto, botones y cámara utilizables sin solapamientos importantes",PENDIENTE,,,,
-U13,Player Windows,Compilar y abrir el ejecutable con su carpeta completa,Inicia fuera del editor sin excepciones ni dependencias ausentes,PENDIENTE,,,,
-U14,Player Windows,"Repetir A-00, B-00 y C-00 y exportar CSV",Resultados coherentes con el núcleo y archivos accesibles,PENDIENTE,,,,
-U15,Player Windows,Explorar el caso 180° y agotar tiempo o detener,Limitación visible; no se inventa éxito ni tiempo de llegada,PENDIENTE,,,,
-U16,Release,Descargar la release a otra carpeta y ejecutar,ZIP completo; ejecutable funciona y SHA256 coincide,PENDIENTE,,,,
+U01,Editor,Importar el proyecto con la versión registrada,Sin errores de compilación ni referencias de scripts perdidas,APROBADO,05/11/26,6000.3.0f1,Windows 11,"Se importa correctamente sin ningun error. Aparece alguna advertencia de ‘deprecated’, pero funciona bien."
+U02,Editor,Abrir la escena y entrar en Play,Título visible. Botones legibles. Shader sin color magenta,APROBADO,05/11/26,6000.3.0f2,Windows 11,Se abre y se ejecuta perfectamente.
+U03,Editor,"Recorrer título, instrucciones, créditos y configuración",Navegación completa. Ningún ensayo empieza antes de Iniciar,APROBADO,05/11/26,6000.3.0f3,Windows 11,Todo parece verse y funcionar bien.
+U04,Editor,Ejecutar A-00 en comparación,Ambos agentes visibles por color y etiqueta. Final por llegada,APROBADO,05/11/26,6000.3.0f4,Windows 11,Ejecución completada. Se ha guardado los resultados en el excel.
+U05,Editor,Pausar con Espacio durante dos segundos reales y continuar,Tiempo y posiciones no avanzan mientras dura la pausa,APROBADO,05/11/26,6000.3.0f5,Windows 11,Ejecución completada. Se ha guardado los resultados en el excel.
+U06,Editor,Repetir A-00 y alternar 1×/4×,Mismas métricas conductuales. Solo cambia la duración real de presentación,APROBADO,05/11/26,6000.3.0f6,Windows 11,Ejecución completada. Se ha guardado los resultados en el excel.
+U07,Editor,Ejecutar B-00 y alternar vista y referencias,"Obstáculos, recorridos y referencias visibles. Sin atravesar discos",APROBADO,05/11/26,6000.3.0f7,Windows 11,Ejecución completada. Se ha guardado los resultados en el excel.
+U08,Editor,Ejecutar C-00 a velocidad 1×,Espera ante primera meta y cambio a los 10 s. No termina antes,APROBADO,05/11/26,6000.3.0f8,Windows 11,Ejecución completada. Se ha guardado los resultados en el excel.
+U09,Editor,Cambiar rumbo por texto inválido y después por un número válido,Se informa del error sin perder configuración. El número válido inicia,APROBADO,05/11/26,6000.3.0f9,Windows 11,Aparece abajo el mensaje de ´El rumbo debe estar entre -180 y 180 grados´
+U10,Editor,Detener un ensayo y abrir su carpeta,"Estado Aborted. Llegada vacía. Configuración, eventos y trazas conservados",APROBADO,05/11/26,6000.3.0f10,Windows 11,Se para la simulación correctamente y aparece el menu con la opción de acceder a los datos guardados
+U11,Editor,Ejecutar menú de comprobaciones del núcleo,Reporte unity_editor_core_checks.json con cero fallos,APROBADO,05/11/26,6000.3.0f11,Windows 11,All 20 C# core checks passed inside Unity. Report: C:\Users\gbarr\OneDrive\Desktop\tfg-drosophila-npcs\Validation/Executed/unity_editor_core_checks.json UnityEngine.Debug:Log (object) NpcLab.EditorTools.ProjectTools:ValidateCore () (at Assets/Editor/ProjectTools.cs:26)  
+U12,Editor,Cambiar tamaño de Game entre 1440×900 y 1920×1080,"Texto, botones y cámara utilizables sin solapamientos importantes",APROBADO,05/11/26,6000.3.0f12,Windows 11,El cambio de resolución no modifica la disposición de los botones ni desajusta nada
+U13,Player Windows,Compilar y abrir el ejecutable con su carpeta completa,Inicia fuera del editor sin excepciones ni dependencias ausentes,APROBADO,05/11/26,6000.3.0f13,Windows 11,Se inicia correctamente sin ningún problema aparente
+U14,Player Windows,"Repetir A-00, B-00 y C-00 y exportar CSV",Resultados coherentes con el núcleo y archivos accesibles,APROBADO,05/11/26,6000.3.0f14,Windows 11,Ejecución completada. Se ha guardado los resultados en el excel.
+U15,Player Windows,Explorar el caso 180° y agotar tiempo o detener,Limitación visible. No se inventa éxito ni tiempo de llegada,APROBADO,05/11/26,6000.3.0f15,Windows 11,Se observa un desplazamiento sin rumbo el cual nunca llegara a la meta. Se detiene la simulación y se guardan los datos en el excel
+U16,Release,Descargar la release a otra carpeta y ejecutar,ZIP completo; ejecutable funciona y SHA256 coincide,APROBADO,05/11/26,6000.3.0f16,Windows 11,Funciona todo correctamente

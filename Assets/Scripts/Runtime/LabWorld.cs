@@ -17,6 +17,7 @@ namespace NpcLab.Runtime
         Transform target;
         Transform arrivalRing;
         readonly Shader shader;
+        readonly Camera backgroundCamera;
         public readonly Camera Camera;
         public bool ShowTrails = true, ShowReference = true;
         public LabWorld()
@@ -24,8 +25,17 @@ namespace NpcLab.Runtime
             root = new GameObject("Navigation lab world");
             shader = Resources.Load<Shader>("LabSurface");
             if (shader == null) throw new System.InvalidOperationException("Missing Resources/LabSurface.shader.");
+            // Clear the full frame before drawing the scene viewport and the interface.
+            GameObject backgroundObject = new GameObject("Lab background"); backgroundObject.transform.SetParent(root.transform);
+            backgroundCamera = backgroundObject.AddComponent<Camera>();
+            backgroundCamera.clearFlags = CameraClearFlags.SolidColor;
+            backgroundCamera.backgroundColor = new Color(0.035f,0.055f,0.08f);
+            backgroundCamera.cullingMask = 0;
+            backgroundCamera.depth = -100;
+            backgroundCamera.rect = new Rect(0,0,1,1);
             GameObject cameraObject = new GameObject("Lab camera"); cameraObject.transform.SetParent(root.transform);
             Camera = cameraObject.AddComponent<Camera>(); Camera.orthographic = true; Camera.orthographicSize = 13.4f;
+            Camera.depth = 0;
             Camera.backgroundColor = new Color(0.035f,0.055f,0.08f); Camera.clearFlags = CameraClearFlags.SolidColor;
             Camera.nearClipPlane = 0.1f; Camera.farClipPlane = 100;
             Camera.transform.position = new Vector3(17,25,-21); Camera.transform.LookAt(Vector3.zero);
@@ -50,7 +60,7 @@ namespace NpcLab.Runtime
         public void Rebuild(TrialDefinition definition, IList<ControllerKind> kinds)
         {
             for (int i = root.transform.childCount - 1; i >= 0; --i)
-            { Transform t = root.transform.GetChild(i); if (t.gameObject != Camera.gameObject) { t.gameObject.SetActive(false); Object.Destroy(t.gameObject); } }
+            { Transform t = root.transform.GetChild(i); if (t.gameObject != Camera.gameObject && t.gameObject != backgroundCamera.gameObject) { t.gameObject.SetActive(false); Object.Destroy(t.gameObject); } }
             foreach (Material m in materials) Object.Destroy(m); materials.Clear();
             bodies.Clear(); trails.Clear(); arrows.Clear(); points.Clear();
             float half = (float)definition.settings.arenaSize / 2;

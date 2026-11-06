@@ -1,0 +1,28 @@
+{
+  "scope":"C# core executed; Unity Play mode and Player build are separate checks",
+  "coreVersion":"0.2.0-pec2",
+  "failures":0,
+  "maximumDifferenceFromPython":2.1316282072803006E-14,
+  "checks":[
+    {"name":"circular_angles","passed":true,"detail":"passed"},
+    {"name":"unity_xz_convention","passed":true,"detail":"passed"},
+    {"name":"published_rates_match_python","passed":true,"detail":"passed"},
+    {"name":"closed_loop_matches_block1_python","passed":true,"detail":"passed"},
+    {"name":"antipodal_limitation_is_preserved","passed":true,"detail":"passed"},
+    {"name":"all_90_configurations_are_valid_and_reproducible","passed":true,"detail":"passed"},
+    {"name":"paired_initial_information","passed":true,"detail":"passed"},
+    {"name":"pause_does_not_advance_time_or_state","passed":true,"detail":"passed"},
+    {"name":"first_goal_does_not_finish_scenario_c","passed":true,"detail":"passed"},
+    {"name":"continuous_collision_prevents_tunnelling","passed":true,"detail":"passed"},
+    {"name":"replay_is_deterministic_without_timing","passed":true,"detail":"passed"},
+    {"name":"abort_is_retained_and_arrival_is_null","passed":true,"detail":"passed"},
+    {"name":"invalid_configuration_is_rejected","passed":true,"detail":"passed"},
+    {"name":"csv_is_invariant_under_spanish_locale","passed":true,"detail":"passed"},
+    {"name":"showcase_scenarios_reach_final_goal","passed":true,"detail":"passed"},
+    {"name":"fractional_final_step_uses_actual_dt","passed":true,"detail":"passed"},
+    {"name":"initial_final_goal_succeeds_without_fake_samples","passed":true,"detail":"passed"},
+    {"name":"weighted_errors_recompute_from_trace","passed":true,"detail":"passed"},
+    {"name":"far_obstacles_are_not_counted_as_contacts","passed":true,"detail":"passed"},
+    {"name":"timing_disabled_is_missing_not_zero_cost","passed":true,"detail":"passed"}
+  ]
+}
