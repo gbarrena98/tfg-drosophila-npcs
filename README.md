@@ -4,6 +4,12 @@ Prototipo de navegación de NPCs desarrollado para el TFG de Germán Barrena Alo
 
 El proyecto compara dos formas de orientar un agente hacia una meta: un controlador proporcional y una adaptación de un modelo de 24 unidades PFL3 de *Drosophila melanogaster*. La aplicación permite observar sus recorridos y exportar los resultados de cada ensayo.
 
+## Descargar la versión para Windows
+
+La [release v0.2.0-pec2](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/tag/v0.2.0-pec2) incluye [Windows.zip](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.2.0-pec2/Windows.zip).
+
+Para ejecutar la aplicación, extraer todos los archivos del ZIP y abrir `DrosophilaNavigationLab.exe`. El ejecutable necesita las carpetas y DLL que lo acompañan. Unity solo es necesario para abrir o modificar el proyecto fuente.
+
 ## Abrir el proyecto
 
 La versión de referencia es **Unity 6000.3.0f1**, con el renderizador integrado (Built-in).
@@ -61,7 +67,7 @@ También se pueden ejecutar sin Unity, con **.NET SDK 10**, desde la raíz del p
 dotnet run --project Tools/CoreHarness -- check --root .
 ```
 
-Los informes incluidos recogen 20 comprobaciones del núcleo, un piloto de 180 ejecuciones y la compilación de los scripts contra la API de Unity. **La apertura en el editor y las pruebas del ejecutable siguen pendientes** y se registran en [Docs/ACEPTACION_UNITY.csv](Docs/ACEPTACION_UNITY.csv). El piloto utiliza configuraciones de desarrollo; la evaluación final del TFG se realizará por separado.
+Los informes incluidos recogen 20 comprobaciones del núcleo, un piloto de 180 ejecuciones y la compilación de los scripts contra la API de Unity. Las comprobaciones locales en el editor y el Player se registran en [Docs/ACEPTACION_UNITY.csv](Docs/ACEPTACION_UNITY.csv), junto con el informe del núcleo ejecutado desde Unity. La versión para Windows está publicada y se ha comprobado la integridad del ZIP distribuido. El piloto utiliza configuraciones de desarrollo. La evaluación final del TFG se realizará con configuraciones reservadas.
 
 El detalle de las pruebas y sus límites está en [Docs/VALIDACION.md](Docs/VALIDACION.md).
 
@@ -77,7 +83,7 @@ python Tools/package_release.py --player-verified
 
 El comando genera en `Release` un ZIP y su archivo SHA256. El ZIP incluye toda la carpeta del ejecutable: son necesarios el `.exe`, `UnityPlayer.dll`, la carpeta `_Data` y los demás archivos generados.
 
-Los pasos para subir las fuentes y publicar la release están en [Docs/GITHUB.md](Docs/GITHUB.md). Este repositorio contiene el proyecto fuente; el ejecutable debe adjuntarse a la release correspondiente.
+La versión publicada y la organización de las fuentes se describen en [Docs/GITHUB.md](Docs/GITHUB.md). La release contiene el Player completo y el repositorio conserva el proyecto editable.
 
 ## Organización
 

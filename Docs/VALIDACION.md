@@ -1,6 +1,6 @@
 # Registro de validación y alcance de la evidencia
 
-Versión: `0.2.0-pec2`. Las primeras pruebas del núcleo y la compilación contra la API de Unity se realizaron en Linux el 4 de noviembre de 2026. La compilación se ha repetido tras revisar los textos de créditos; su fecha y las huellas actuales están en `Validation/Executed/unity_api_compile.json`. Los archivos de sesión usan fecha UTC. Las pruebas del editor y del ejecutable Windows tienen su propio registro en `Docs/ACEPTACION_UNITY.csv`.
+Versión: `0.2.0-pec2`. Los informes de `Validation/Executed` identifican el entorno y la versión de código de cada comprobación. El núcleo se ha verificado mediante el arnés .NET y desde Unity. Las pruebas locales de interfaz y Player se recogen en `Docs/ACEPTACION_UNITY.csv`. La release para Windows está publicada.
 
 ## Resultado verificado
 
@@ -11,10 +11,11 @@ Versión: `0.2.0-pec2`. Las primeras pruebas del núcleo y la compilación contr
 | Bucle angular del bloque 1 | 3507 filas de rumbo, error y giro | Coincidencia dentro de 10⁻⁷ |
 | Piloto de desarrollo | 90 configuraciones × 2 controladores | 180/180 llegadas; cero contactos en esas configuraciones |
 | API de Unity | C# 9, destino .NET Standard 2.1, bibliotecas oficiales 6000.3.0f1 | Compilación sin errores ni advertencias |
-| Apertura, shader y Play en Unity | `Docs/ACEPTACION_UNITY.csv` | Pendiente de ejecución local |
-| Player Windows y descarga de release | Mismo registro de aceptación | Pendiente de compilar, ejecutar y publicar |
+| Apertura, shader y Play en Unity | `Docs/ACEPTACION_UNITY.csv` | Pruebas locales registradas como aprobadas |
+| Player Windows | `Docs/ACEPTACION_UNITY.csv`, U13–U15 | Ejecución y exportación locales registradas como aprobadas |
+| Distribución Windows | Release `v0.2.0-pec2`, registro U16 | ZIP completo, integridad y SHA-256 comprobados |
 
-El último resultado de compilación se identifica mediante huellas SHA256 de los scripts y referencias en `unity_api_compile.json`. Se usó SDK .NET 10.0.403 como compilador externo. Esa comprobación resuelve tipos y API de los scripts; no ejecuta el importador de Unity, el compilador de shaders ni el motor. Las DLL oficiales utilizadas no se incluyen en la distribución.
+El informe de compilación externa identifica mediante huellas SHA256 los scripts y referencias comprobados en esa ejecución, conservados en `unity_api_compile.json`. Se usó SDK .NET 10.0.403 como compilador externo. Esa comprobación resuelve tipos y API de los scripts; no ejecuta el importador de Unity, el compilador de shaders ni el motor. Las DLL oficiales utilizadas no se incluyen en la distribución.
 
 ## Qué comprueban los 20 casos
 
@@ -51,11 +52,13 @@ python Tools/validate_repository.py
 
 El segundo comando regenera resultados de desarrollo. Las métricas conductuales son deterministas en el mismo entorno; las fechas de sesión y cualquier medición de reloj habilitada no lo son. Para comparar entre plataformas se emplearán tolerancias numéricas y se anotarán las versiones, en lugar de exigir igualdad binaria de valores de punto flotante.
 
-## Completar la aceptación local
+## Aceptación local y distribución
 
-Abrir `Docs/ACEPTACION_UNITY.csv` y registrar el resultado real de cada fila. Campos previstos: estado, fecha, versión de Unity, sistema y evidencia u observaciones. No cambiar «PENDIENTE» por «APROBADO» sin realizar la prueba. Si aparece un fallo, conservar su descripción, corregirlo y volver a comprobar el comportamiento afectado.
+El registro de aceptación recoge las pruebas de importación, interfaz, pausa, repetición, configuración, exportación y ejecución del Player. El informe `Validation/Executed/unity_editor_core_checks.json` contiene las 20 comprobaciones del núcleo ejecutadas desde el editor, sin fallos.
 
-Antes de entregar: guardar en Git la versión comprobada, generar el Player, probarlo fuera del editor y descargar la release desde otra carpeta. El tag debe apuntar al código de ese ejecutable. Hasta completar esos pasos, las fuentes quedan preparadas y verificadas en el alcance anterior, pero no existe todavía una release binaria validada.
+Las pruebas locales usan Unity `6000.3.0f1` en Windows 11. En U16 se distingue la verificación de integridad del ZIP publicado de las pruebas de ejecución local del programa, recogidas en U13–U15. Esta comprobación de distribución no añade una ejecución de Windows en otro equipo.
+
+La [release v0.2.0-pec2](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/tag/v0.2.0-pec2) distribuye `Windows.zip`. Su contenido y su huella SHA-256 coinciden con el archivo publicado en GitHub.
 
 ## Limitaciones y decisiones abiertas
 

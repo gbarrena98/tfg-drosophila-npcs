@@ -315,7 +315,7 @@ La extracción completa requiere pandas, NumPy y PyArrow. El comando python src/
 
 Las figuras se regeneran con python src/make_figures.py, con NumPy y Matplotlib instalados. El README diferencia estos tres recorridos y conserva las versiones observadas durante la ejecución. La repetición comprueba trazabilidad computacional; la transferencia a Unity necesitará comprobar convenciones angulares, precisión y actualización temporal.
 
-## Anexo C Precisiones para incorporar a la memoria
+## Anexo C Definiciones e interpretación de las métricas
 
 ### C1 Definición del error angular y su resumen
 
@@ -355,7 +355,7 @@ Se ha completado la revisión de antecedentes y se ha auditado una subred de 195
 
 El modelo funcional reducido se ha ejecutado con parámetros de referencia y adaptaciones explícitas. Supera los siete casos angulares iniciales y conserva el contraejemplo antipodal, lo que justifica preparar su integración en el prototipo.
 
-Incorporar pesos FlyWire exige resolver la trazabilidad anatómica y revisar el esfuerzo disponible. La vía adoptada se reflejará en objetivos, método y comunicación con el tutor. La planificación se actualizará con horas reales y tiempo restante.
+La vía adoptada conserva la auditoría FlyWire como evidencia anatómica independiente y utiliza el modelo funcional publicado para el control del NPC. Incorporar los recuentos como pesos requerirá justificar su conversión a una dinámica y validar los nuevos supuestos.
 
 ## Referencias bibliográficas
 
