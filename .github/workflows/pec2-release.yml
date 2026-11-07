@@ -1,0 +1,52 @@
+name: Preparar release PEC2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pec2-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pec2-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Preparar la publicación
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v0.2.0-pec2"
+          notes="$RUNNER_TEMP/pec2-notes.md"
+          cat > "$notes" <<'NOTES'
+          Prototipo de navegación de NPCs del TFG de Ingeniería Informática de la UOC.
+
+          Incluye control proporcional y un modelo funcional reducido de 24 unidades PFL3, escenarios de meta fija, obstáculos y cambio de meta, pausa, repetición y exportación de resultados.
+
+          Para ejecutar en Windows de 64 bits, descargar el ZIP adjunto, extraer todos sus archivos y abrir DrosophilaNavigationLab.exe. Conservar las carpetas y DLL incluidas junto al programa.
+
+          El modelo PFL3 adapta una formulación publicada. Los datos extraídos de FlyWire se conservan como material de investigación y no se utilizan como pesos del controlador. Las configuraciones son de desarrollo; la evaluación final del TFG se realizará por separado.
+          NOTES
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft' > "$RUNNER_TEMP/is-draft.txt" 2>/dev/null; then
+            if [[ "$(cat "$RUNNER_TEMP/is-draft.txt")" != "true" ]]; then
+              echo "La versión ya está publicada; se conserva."
+              exit 0
+            fi
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "PEC2 — Prototipo de navegación PFL3" --notes-file "$notes"
+          else
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "PEC2 — Prototipo de navegación PFL3" --notes-file "$notes" --draft
+          fi
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq '.url' >> "$GITHUB_STEP_SUMMARY"
+          echo "Borrador preparado. El programa Windows debe adjuntarse antes de publicar." >> "$GITHUB_STEP_SUMMARY"
+
