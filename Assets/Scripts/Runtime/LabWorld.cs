@@ -16,6 +16,7 @@ namespace NpcLab.Runtime
         readonly List<Material> materials = new List<Material>();
         Transform target;
         Transform arrivalRing;
+        LineRenderer startingArrow;
         readonly Shader shader;
         readonly Camera backgroundCamera;
         public readonly Camera Camera;
@@ -63,6 +64,7 @@ namespace NpcLab.Runtime
             { Transform t = root.transform.GetChild(i); if (t.gameObject != Camera.gameObject && t.gameObject != backgroundCamera.gameObject) { t.gameObject.SetActive(false); Object.Destroy(t.gameObject); } }
             foreach (Material m in materials) Object.Destroy(m); materials.Clear();
             bodies.Clear(); trails.Clear(); arrows.Clear(); points.Clear();
+            startingArrow = null;
             float half = (float)definition.settings.arenaSize / 2;
             Primitive(PrimitiveType.Cube,"Arena",new Vector3(0,-.08f,0),new Vector3(half*2,.12f,half*2),new Color(.09f,.14f,.18f),root.transform);
             for (int i = -(int)half; i <= (int)half; ++i)
@@ -117,10 +119,25 @@ namespace NpcLab.Runtime
                 arrivalRing.position=At(e.Goal,.035f);
             }
         }
-        public void SetStartingHeading(double heading)
+        public void SetStartingHeading(Vec2 start, double heading)
         {
             Quaternion rotation = Quaternion.Euler(0, (float)heading, 0);
             foreach (Transform body in bodies.Values) body.rotation = rotation;
+            if (startingArrow == null)
+            {
+                startingArrow = Line("Rumbo de salida", Color.white, .18f, root.transform);
+                startingArrow.positionCount = 5;
+            }
+            Vector3 origin = At(start, 1.05f);
+            Vector3 forward = At(Angles.Forward(heading));
+            Vector3 side = new Vector3(forward.z, 0, -forward.x);
+            Vector3 tip = origin + 2.4f * forward;
+            Vector3 back = tip - .56f * forward;
+            startingArrow.SetPosition(0, origin);
+            startingArrow.SetPosition(1, tip);
+            startingArrow.SetPosition(2, back + .29f * side);
+            startingArrow.SetPosition(3, tip);
+            startingArrow.SetPosition(4, back - .29f * side);
         }
         public void SetTopView(bool top)
         {Camera.transform.position=top?new Vector3(0,30,0):new Vector3(17,25,-21);Camera.transform.rotation=top?Quaternion.Euler(90,0,0):Quaternion.LookRotation(-Camera.transform.position);}

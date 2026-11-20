@@ -89,14 +89,14 @@ namespace NpcLab.Runtime
         public void SetGuideHeading(double heading)
         {
             GuideHeading = heading;
-            World.SetStartingHeading(heading);
+            World.SetStartingHeading(Selected.start, heading);
         }
 
         public void Preview()
         {
             World.Rebuild(Selected, Kinds());
             World.SetTopView(IsGuided || TopView);
-            if (IsGuided) World.SetStartingHeading(GuideHeading);
+            if (IsGuided) World.SetStartingHeading(Selected.start, GuideHeading);
         }
 
         List<ControllerKind> Kinds()

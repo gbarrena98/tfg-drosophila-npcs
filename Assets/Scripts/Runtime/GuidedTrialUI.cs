@@ -94,8 +94,12 @@ namespace NpcLab.Runtime
 
             if (results)
             {
-                Text("Prueba otro rumbo y compara los tiempos con los de esta salida.",
-                    48, 428, 266, 84);
+                bool oppositeTimeout = app.Engines[1].State == TrialState.Timeout
+                    && Math.Abs(Math.Abs(Angles.Wrap(app.GuideHeading - Angles.Heading(app.Selected.goal - app.Selected.start))) - 180) < .001;
+                string resultHelp = oppositeTimeout
+                    ? "De espaldas a la meta, el PFL3 ha agotado el tiempo. Prueba otro rumbo para ver cómo cambia el giro."
+                    : "Prueba otro rumbo y compara los tiempos con los de esta salida.";
+                Text(resultHelp, 48, 428, 266, 92);
                 if (Button("Cambiar rumbo y repetir", 47, 531, 276, 52, true)) app.PrepareGuide();
                 if (Button("Repetir el mismo rumbo", 47, 595, 276, 45)) app.StartTrial();
                 if (Button("Configuración libre", 47, 652, 276, 45)) app.ChangeScreen(LabScreen.Setup);
@@ -157,12 +161,6 @@ namespace NpcLab.Runtime
             MapLabel("Meta", MapPoint(definition.goal) + new Vector2(12, -15), 55);
             if (preparing)
             {
-                Vector2 tip = MapPoint(definition.start + Angles.Forward(app.GuideHeading) * 2.3);
-                Vector2 direction = (tip - start).normalized;
-                Vector2 side = new Vector2(-direction.y, direction.x);
-                GuideLine(start, tip);
-                GuideLine(tip, tip - 8 * direction + 4 * side);
-                GuideLine(tip, tip - 8 * direction - 4 * side);
                 Marker(start, ControllerKind.Proportional);
                 Marker(start, ControllerKind.Pfl3);
             }
@@ -176,15 +174,6 @@ namespace NpcLab.Runtime
         {
             Box(new Rect(origin.x, origin.y, width, 27), background);
             Text(label, origin.x + 6, origin.y + 2, width - 8, 25);
-        }
-
-        void GuideLine(Vector2 from, Vector2 to)
-        {
-            Matrix4x4 old = GUI.matrix;
-            Vector2 delta = to - from;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, from);
-            Box(new Rect(from.x, from.y - 1, delta.magnitude, 2), white);
-            GUI.matrix = old;
         }
 
         void Marker(Vector2 point, ControllerKind kind)

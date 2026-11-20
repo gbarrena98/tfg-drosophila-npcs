@@ -85,6 +85,20 @@ class GameWindow:
         red, green, blue = self.capture().getpixel(self.local_point(x, y))[:3]
         return green > 105 and blue > 105 and green - red > 42
 
+    def heading_arrow_visible(self, heading):
+        frame = self.capture()
+        radians = math.radians(heading)
+        pixels_per_metre = 512 / (2 * 11.15)
+        hits = 0
+        for distance in (0.85, 1.05, 1.25, 1.45, 1.65, 1.85):
+            world_x = -6 + distance * math.sin(radians)
+            world_z = -6 + distance * math.cos(radians)
+            x, y = self.local_point(890 + world_x * pixels_per_metre, 411 - world_z * pixels_per_metre)
+            neighbourhood = frame.crop((x - 2, y - 2, x + 3, y + 3)).convert('RGB')
+            if any(min(rgb) > 100 and max(rgb) - min(rgb) < 22 for rgb in neighbourhood.getdata()):
+                hits += 1
+        return hits >= 5
+
     def save(self, name):
         self.capture().save(EVIDENCE / (name + '.png'))
 
@@ -127,6 +141,7 @@ def check_gui(archive):
             window.save('01-menu')
             window.click(260, 470)
             wait_for(lambda: window.primary_visible(60, 674), 'Guide did not open.')
+            wait_for(lambda: window.heading_arrow_visible(-45), 'Initial arrow is not visible at its world position.', 8)
             window.save('02-preparacion')
             window.click(160, 675)
             time.sleep(.8)
@@ -140,6 +155,7 @@ def check_gui(archive):
             window.save('04-resultados')
             window.click(175, 554)
             window.click(170, 429)
+            wait_for(lambda: window.heading_arrow_visible(45), 'Arrow did not turn towards the goal.', 8)
             window.click(170, 674)
             _, changed, second = wait_for(lambda: session_matches(used, 45, 'guided', 'A-00-custom'), 'Changed heading did not export.')
             for key in initial.keys() - {'initialHeading', 'configurationId', 'datasetRole'}:
@@ -149,6 +165,7 @@ def check_gui(archive):
             window.save('05-comparacion')
             window.click(170, 554)
             window.click(170, 502)
+            wait_for(lambda: window.heading_arrow_visible(-135), 'Arrow did not turn away from the goal.', 8)
             window.click(170, 674)
             _, _, opposite = wait_for(lambda: session_matches(used, -135, 'guided', 'A-00-custom'), 'Antipodal run did not export.', 90)
             assert opposite['Pfl3']['state'] == 'Timeout' and not opposite['Pfl3']['arrival_s']
