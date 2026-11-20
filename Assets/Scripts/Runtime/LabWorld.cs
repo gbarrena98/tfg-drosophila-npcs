@@ -88,7 +88,9 @@ namespace NpcLab.Runtime
                 Primitive(PrimitiveType.Cube,"Heading",Vector3.zero,new Vector3(.12f,.1f,.38f),Color.white,body).transform.localPosition = new Vector3(0,.84f,.23f);
                 body.position=At(definition.start,kind==ControllerKind.Pfl3?.035f:0);
                 body.rotation=Quaternion.Euler(0,(float)definition.initialHeading,0);bodies[kind]=body;
-                trails[kind]=Line(kind+" trajectory",color,.055f,root.transform);
+                // Different widths leave both traces visible when the paths coincide.
+                float trailWidth = kinds.Count == 1 ? .085f : kind == ControllerKind.Proportional ? .20f : .072f;
+                trails[kind]=Line(kind+" trajectory",color,trailWidth,root.transform);
                 arrows[kind]=Line(kind+" reference",new Color(color.r*.65f,color.g*.65f,color.b*.65f),.035f,root.transform);
                 points[kind]=new List<Vector3>();
             }
@@ -114,6 +116,11 @@ namespace NpcLab.Runtime
                 target.position=At(e.Goal,.13f);
                 arrivalRing.position=At(e.Goal,.035f);
             }
+        }
+        public void SetStartingHeading(double heading)
+        {
+            Quaternion rotation = Quaternion.Euler(0, (float)heading, 0);
+            foreach (Transform body in bodies.Values) body.rotation = rotation;
         }
         public void SetTopView(bool top)
         {Camera.transform.position=top?new Vector3(0,30,0):new Vector3(17,25,-21);Camera.transform.rotation=top?Quaternion.Euler(90,0,0):Quaternion.LookRotation(-Camera.transform.position);}

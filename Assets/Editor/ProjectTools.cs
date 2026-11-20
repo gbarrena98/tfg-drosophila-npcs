@@ -34,7 +34,7 @@ namespace NpcLab.EditorTools
                 throw new InvalidOperationException("Install Windows Build Support (Mono) for this Unity version.");
             ValidateCore();
             PlayerSettings.companyName="German Barrena Alonso";PlayerSettings.productName="Drosophila Navigation Lab";
-            PlayerSettings.bundleVersion="0.2.0";PlayerSettings.defaultScreenWidth=1440;PlayerSettings.defaultScreenHeight=900;
+            PlayerSettings.bundleVersion=NpcLab.Runtime.LabApp.AppVersion;PlayerSettings.defaultScreenWidth=1440;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.runInBackground=true;
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
             EditorSettings.serializationMode=SerializationMode.ForceText;
@@ -44,7 +44,7 @@ namespace NpcLab.EditorTools
             BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
                 scenes=new[]{ScenePath},locationPathName=output,target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
             if(report.summary.result!=BuildResult.Succeeded)throw new InvalidOperationException("Build failed: "+report.summary.result);
-            string manifest="{\"unityVersion\":\""+Application.unityVersion+"\",\"buildResult\":\"Succeeded\",\"target\":\"StandaloneWindows64\",\"coreVersion\":\"0.2.0-pec2\"}\n";
+            string manifest="{\"unityVersion\":\""+Application.unityVersion+"\",\"buildResult\":\"Succeeded\",\"target\":\"StandaloneWindows64\",\"coreVersion\":\""+NpcLab.Core.TrialEngine.CoreVersion+"\",\"appVersion\":\""+NpcLab.Runtime.LabApp.AppVersion+"\"}\n";
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(output),"build_info.json"),manifest);
             foreach(string name in new[]{"LICENCIA.md","THIRD_PARTY_NOTICES.md"})
                 File.Copy(Path.Combine(projectRoot,name),Path.Combine(Path.GetDirectoryName(output),name),true);

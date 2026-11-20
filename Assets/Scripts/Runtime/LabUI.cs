@@ -6,7 +6,7 @@ using UnityEngine;
 namespace NpcLab.Runtime
 {
     // Immediate-mode UI keeps the prototype independent of UGUI/TMP packages and fonts.
-    public sealed class LabUI
+    public sealed partial class LabUI
     {
         readonly LabApp app;
         GUIStyle body, small, heading, title, button, field, toggle;
@@ -44,6 +44,7 @@ namespace NpcLab.Runtime
             GUI.matrix=Matrix4x4.TRS(new Vector3((Screen.width-1440*scale)/2,(Screen.height-900*scale)/2,0),Quaternion.identity,new Vector3(scale,scale,1));
             HandleKeys();
             if(app.ScreenState==LabScreen.Title)DrawTitle();
+            else if(app.IsGuided)DrawGuide();
             else if(app.ScreenState==LabScreen.Setup)DrawSetup();
             else if(app.ScreenState==LabScreen.Instructions)DrawInstructions();
             else if(app.ScreenState==LabScreen.Credits)DrawCredits();
@@ -54,21 +55,20 @@ namespace NpcLab.Runtime
         {
             Box(new Rect(0,0,1440,82),background);
             Text("NPC / NAVIGATION LAB",24,16,650,34,heading);Text(subtitle,26,50,1000,26,small);
-            Text("PEC2 · v0.2.0",1215,25,210,30,small);
+            Text("PEC3 · v" + LabApp.AppVersion,1200,25,225,30,small);
         }
         void DrawTitle()
         {
             Box(new Rect(0,0,1440,900),background);Header("Control de orientación · TFG de Ingeniería Informática");
             Text("Navegación bioinspirada",110,155,1200,85,title);
-            Text("Observa y compara dos formas de orientar un NPC hacia una meta.",114,255,1120,50,heading);
-            Text("Modelo reducido PFL3 y control proporcional bajo las mismas reglas de movimiento.",114,315,1120,55,body);
-            Card("A  Espacio abierto","Corrección del rumbo y llegada a una meta fija.",110,420,380,145,false);
-            Card("B  Obstáculos","Orientación con una capa común de evitación local.",530,420,380,145,false);
-            Card("C  Cambio de meta","Nueva referencia a los 10 segundos de simulación.",950,420,380,145,false);
-            if(Button("CONFIGURAR ENSAYO",110,625,400,62,true))app.ChangeScreen(LabScreen.Setup);
-            if(Button("Instrucciones",550,625,300,62))app.ChangeScreen(LabScreen.Instructions);
-            if(Button("Créditos y fuentes",890,625,330,62))app.ChangeScreen(LabScreen.Credits);
-            Text("Prototipo experimental · Resultados exportables · Configuraciones guardadas",114,790,1200,35,small);
+            Text("¿Cómo se orientan dos NPC hacia la misma meta?",114,256,1210,55,heading);
+            Text("En el primer ensayo puedes elegir el rumbo de salida y ver qué recorrido hace cada uno.",114,321,1120,60,body);
+            if(Button("Primer ensayo",110,438,360,66,true))app.EnterGuide();
+            if(Button("Configuración libre",502,438,365,66))app.ChangeScreen(LabScreen.Setup);
+            Box(new Rect(110,581,1220,2),panel);
+            Text("La configuración libre incluye espacio abierto, obstáculos y cambio de meta.",114,616,1200,55,body);
+            if(Button("Instrucciones",110,722,260,50))app.ChangeScreen(LabScreen.Instructions);
+            if(Button("Créditos y fuentes",394,722,275,50))app.ChangeScreen(LabScreen.Credits);
         }
         void DrawSetup()
         {
@@ -115,7 +115,7 @@ namespace NpcLab.Runtime
                 if(Button("Pausar  [Espacio]",40,552,240,45,true))app.Pause();
                 if(Button("Detener y guardar",40,611,240,45))app.AbortToResults();
                 if(Button(app.VisualSpeed==1?"Velocidad 1× → 4×":"Velocidad 4× → 1×",40,670,240,42))
-                {app.VisualSpeed=app.VisualSpeed==1?4:1;Time.timeScale=app.VisualSpeed;}
+                app.ToggleSpeed();
             }
             else if(app.ScreenState==LabScreen.Paused)
             {
@@ -173,7 +173,7 @@ namespace NpcLab.Runtime
         void DrawInstructions()
         {
             Box(new Rect(0,0,1440,900),background);Header("Instrucciones");Text("Cómo usar el laboratorio",80,130,1200,60,title);
-            Card("1  Configura","Elige escenario, controlador y una de las 30 configuraciones guardadas de cada escenario. Comparación ejecuta la pareja.",80,250,410,205,false);
+            Card("1  Empieza","Primer ensayo te lleva a A-00 y compara los dos NPC. Configuración libre permite elegir el escenario, el controlador y una de sus 30 configuraciones.",80,250,410,205,false);
             Card("2  Observa","El NPC se orienta y avanza. Puedes pausar, alternar la vista y ver los recorridos. La meta de C cambia a los 10 s.",515,250,410,205,false);
             Card("3  Revisa","Al llegar, agotar el tiempo o detener la prueba, se guardan configuración, métricas, eventos y series temporales CSV.",950,250,410,205,false);
             Text("Enter: iniciar · Espacio / Esc: pausa y continuación · R: repetir desde resultados",80,510,1270,50,heading);
@@ -193,12 +193,16 @@ namespace NpcLab.Runtime
         void HandleKeys()
         {
             Event e=Event.current;if(e.type!=EventType.KeyDown)return;
-            if(e.keyCode==KeyCode.Return&&app.ScreenState==LabScreen.Setup){app.StartTrial();e.Use();}
+            if(e.keyCode==KeyCode.Return || e.keyCode==KeyCode.KeypadEnter)
+            {
+                if(app.ScreenState==LabScreen.Title){app.EnterGuide();e.Use();}
+                else if(app.ScreenState==LabScreen.Setup || app.ScreenState==LabScreen.GuideSetup){app.StartTrial();e.Use();}
+            }
             else if(e.keyCode==KeyCode.Space||e.keyCode==KeyCode.Escape)
             {
                 if(app.ScreenState==LabScreen.Running){app.Pause();e.Use();}
                 else if(app.ScreenState==LabScreen.Paused){app.Resume();e.Use();}
-                else if(e.keyCode==KeyCode.Escape&&(app.ScreenState==LabScreen.Instructions||app.ScreenState==LabScreen.Credits||app.ScreenState==LabScreen.Setup)){app.ChangeScreen(LabScreen.Title);e.Use();}
+                else if(e.keyCode==KeyCode.Escape&&(app.ScreenState==LabScreen.Instructions||app.ScreenState==LabScreen.Credits||app.ScreenState==LabScreen.Setup||app.ScreenState==LabScreen.GuideSetup)){app.ChangeScreen(LabScreen.Title);e.Use();}
             }
             else if(e.keyCode==KeyCode.R&&app.ScreenState==LabScreen.Results){app.StartTrial();e.Use();}
         }

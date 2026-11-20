@@ -4,7 +4,13 @@ Prototipo de navegación de NPCs desarrollado para el TFG de Germán Barrena Alo
 
 El proyecto compara dos formas de orientar un agente hacia una meta: un controlador proporcional y una adaptación de un modelo de 24 unidades PFL3 de *Drosophila melanogaster*. La aplicación permite observar sus recorridos y exportar los resultados de cada ensayo.
 
-## Descargar la versión para Windows
+## Primer ensayo de la PEC3
+
+Desde el menú, **Primer ensayo** abre A-00 en vista superior. Elige un rumbo y pulsa **Iniciar comparación**. El marco ámbar señala al controlador proporcional y el punto cian al PFL3. Cuando los recorridos coinciden se ven el trazo ancho y la línea fina central.
+
+Al terminar, **Cambiar rumbo y repetir** conserva la salida, la meta y los controladores. La tabla muestra el tiempo de cada uno junto al de su intento anterior. **Configuración libre** da acceso a los escenarios A, B y C.
+
+## Versión publicada de la PEC2
 
 La [release v0.2.0-pec2](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/tag/v0.2.0-pec2) incluye [Windows.zip](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.2.0-pec2/Windows.zip).
 
@@ -17,9 +23,9 @@ La versión de referencia es **Unity 6000.3.0f1**, con el renderizador integrado
 1. Clonar el repositorio o descomprimir el proyecto.
 2. En Unity Hub, seleccionar **Add → Add project from disk** y añadir la carpeta que contiene `Assets`, `Packages` y `ProjectSettings`.
 3. Esperar a que termine la importación y abrir **TFG → Abrir laboratorio**. La escena también está en `Assets/Scenes/NavigationLab.unity`.
-4. Abrir la pestaña **Game**, pulsar **Play** y entrar en **Configurar ensayo**.
+4. Abrir la pestaña **Game**, pulsar **Play** y entrar en **Primer ensayo** o **Configuración libre**.
 
-Para una primera prueba, seleccionar **A → Comparación → A-00**. Se recomienda una ventana de 1440 × 900 o mayor. Si se usa otra versión de Unity, registrar el cambio y repetir las comprobaciones.
+Se recomienda una ventana de 1440 × 900 o mayor. Si se usa otra versión de Unity, registrar el cambio y repetir las comprobaciones.
 
 ## Escenarios y controles
 

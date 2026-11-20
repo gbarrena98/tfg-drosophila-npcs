@@ -1,12 +1,13 @@
 DROSOPHILA NAVIGATION LAB
-Prototipo PEC2 del TFG de Germán Barrena Alonso, UOC
-Versión 0.2.0-pec2
+TFG de Germán Barrena Alonso, UOC
+PEC3 · Primer ensayo · Versión 0.3.0-b1
 
 Extraer todos los archivos del ZIP y abrir DrosophilaNavigationLab.exe.
 Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
 
-Configurar ensayo permite elegir tres escenarios, dos controladores o comparación.
-Enter inicia; Espacio o Esc pausa y continúa; R repite desde resultados.
+Primer ensayo abre A-00 y permite comparar dos NPC cambiando el rumbo inicial.
+Configuración libre permite elegir escenario, controlador y configuración.
+Enter inicia el ensayo. Espacio o Esc pausa o continúa y R repite desde los resultados.
 Los botones permiten cambiar vista, mostrar recorridos y detener con registro.
 En el escenario C la meta cambia a los 10 segundos de simulación.
 

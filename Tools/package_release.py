@@ -17,11 +17,13 @@ if missing or not (build / 'DrosophilaNavigationLab_Data').is_dir():
     parser.error('Missing real Unity build: ' + ', '.join(missing + ['check the complete _Data folder']))
 if required[0].read_bytes()[:2] != b'MZ':
     parser.error('The executable is not a Windows PE file.')
-if json.loads(required[2].read_text())['buildResult'] != 'Succeeded':
+manifest = json.loads(required[2].read_text())
+if manifest['buildResult'] != 'Succeeded':
     parser.error('The build manifest does not report success.')
 if not args.player_verified:
     parser.error('First test the actual Player; then use --player-verified.')
-output = root / 'Release/DrosophilaNavigationLab_v0.2.0-pec2_Windows_x64.zip'
+version = manifest.get('appVersion', manifest['coreVersion'])
+output = root / 'Release' / f'DrosophilaNavigationLab_v{version}_Windows_x64.zip'
 output.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
     for p in sorted(build.rglob('*')):
