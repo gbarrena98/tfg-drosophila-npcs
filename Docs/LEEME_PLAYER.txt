@@ -1,11 +1,15 @@
 DROSOPHILA NAVIGATION LAB
 TFG de Germán Barrena Alonso, UOC
-PEC3 · Primer ensayo · Versión 0.3.0-b1
+PEC3 · Alfa jugable · Versión 0.3.0-alpha.2
 
 Extraer todos los archivos del ZIP y abrir DrosophilaNavigationLab.exe.
 Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
 
-Primer ensayo abre A-00 y permite comparar dos NPC cambiando el rumbo inicial.
+Primer ensayo abre A-00. Compara los dos NPC con la meta de frente, de lado,
+de espaldas o casi de espaldas. En A-00, ambos conocen la dirección de la meta.
+Con una diferencia inicial de 180°, la orden de giro del PFL3 es casi nula.
+Desde el menú también puedes abrir B-00 (obstáculos) y C-00 (cambio de meta).
+Usa Mostrar en la arena para aislar una trayectoria. Ambos ensayos siguen activos.
 Configuración libre permite elegir escenario, controlador y configuración.
 Enter inicia el ensayo. Espacio o Esc pausa o continúa y R repite desde los resultados.
 Los botones permiten cambiar vista, mostrar recorridos y detener con registro.

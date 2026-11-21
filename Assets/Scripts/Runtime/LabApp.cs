@@ -11,8 +11,8 @@ namespace NpcLab.Runtime
 
     public sealed class LabApp : MonoBehaviour
     {
-        public const string AppVersion = "0.3.0-b1";
-        public static readonly Rect GuideArena = new Rect(370, 155, 1040, 512);
+        public const string AppVersion = "0.3.0-alpha.2";
+        public static readonly Rect GuideArena = new Rect(340, 112, 712, 612);
         public static readonly string[] ScenarioNames = { "A · Espacio abierto", "B · Obstáculos fijos", "C · Cambio de meta" };
         public static readonly string[] ControllerNames = { "Proporcional", "PFL3", "Comparación" };
 
@@ -66,9 +66,9 @@ namespace NpcLab.Runtime
             Preview();
         }
 
-        public void EnterGuide()
+        public void EnterGuide(ScenarioKind scenario = ScenarioKind.Open)
         {
-            guideSelection = ReadConfiguration("A-00");
+            guideSelection = ReadConfiguration(((char)('A' + (int)scenario)).ToString() + "-00");
             IsGuided = true;
             GuideHeading = guideSelection.initialHeading;
             guideSpeed = 1;
@@ -81,6 +81,7 @@ namespace NpcLab.Runtime
 
         public void PrepareGuide()
         {
+            World.OnlyController = null;
             ScreenState = LabScreen.GuideSetup;
             Time.timeScale = 1;
             Preview();
@@ -172,7 +173,7 @@ namespace NpcLab.Runtime
             World.Camera.rect = new Rect((offsetX + arena.x * scale) / Screen.width,
                 (offsetY + (900 - arena.yMax) * scale) / Screen.height,
                 arena.width * scale / Screen.width, arena.height * scale / Screen.height);
-            World.Camera.orthographicSize = IsGuided ? 11.15f : 13.4f;
+            World.Camera.orthographicSize = IsGuided ? 10.65f : 13.4f;
             World.ShowTrails = IsGuided || Trajectories;
             World.ShowReference = !IsGuided && ReferenceArrows;
             if (Engines.Count > 0 && (ScreenState == LabScreen.Running || ScreenState == LabScreen.Paused || ScreenState == LabScreen.Results))
@@ -203,6 +204,7 @@ namespace NpcLab.Runtime
         public void ChangeScreen(LabScreen screen)
         {
             IsGuided = false;
+            World.OnlyController = null;
             PreviousGuideTrial = null;
             ScreenState = screen;
             Time.timeScale = 1;
@@ -256,6 +258,11 @@ namespace NpcLab.Runtime
             foreach (TrialEngine engine in Engines) if (!engine.Finished) engine.Abort();
             SaveResults();
             Time.timeScale = 1;
+        }
+        void OnDestroy()
+        {
+            if (ui != null) ui.Dispose();
+            if (World != null) World.Dispose();
         }
         void OnDisable() { Time.timeScale = 1; }
     }

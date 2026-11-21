@@ -1,4 +1,4 @@
-"""Build the block 1 Windows preview using the Mono Player and assets shipped in PEC2."""
+"""Build the PEC3 Windows alpha using the released Mono Player and the current interface and artwork."""
 import argparse
 import hashlib
 import json
@@ -48,7 +48,7 @@ def main():
         sdks = subprocess.check_output([args.dotnet, '--list-sdks'], text=True).splitlines()
         sdk_line = next((line for line in sdks if line.startswith(sdk_version + ' [')), None)
         if sdk_line is None:
-            raise RuntimeError(f'The reproducible block 1 preview requires .NET SDK {sdk_version}.')
+            raise RuntimeError(f'The reproducible PEC3 build requires .NET SDK {sdk_version}.')
         compiler = Path(sdk_line.split('[', 1)[1].rstrip(']')) / sdk_version / 'Roslyn/bincore/csc.dll'
 
         references = sorted((p for p in managed.glob('*.dll') if p != runtime), key=lambda p: p.name)
@@ -58,9 +58,15 @@ def main():
                         '-out:' + str(runtime), *('-r:' + str(p) for p in references), *sources], cwd=ROOT, check=True)
         instructions = (ROOT / 'Docs/LEEME_PLAYER.txt').read_text(encoding='utf-8')
         (player / 'LEEME.txt').write_bytes(instructions.encode('utf-8'))
+        assets = player / 'DrosophilaNavigationLab_Data/StreamingAssets'
+        assets.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / 'Assets/StreamingAssets/Drosophila.png', assets / 'Drosophila.png')
+        notices = (ROOT / 'THIRD_PARTY_NOTICES.md').read_text(encoding='utf-8')
+        (player / 'THIRD_PARTY_NOTICES.md').write_bytes(notices.encode('utf-8'))
         info_path = player / 'build_info.json'
         info = json.loads(info_path.read_bytes())
-        info.update(appVersion=version, buildMethod='incremental Mono runtime assembly',
+        info.update(appVersion=version, buildMethod='incremental Mono runtime assembly and streaming artwork',
+                    illustrationSha256=sha256(assets / 'Drosophila.png'),
                     basePlayerTag=BASE_TAG, basePlayerZipSha256=BASE_SHA, runtimeAssemblySha256=sha256(runtime))
         info_path.write_bytes((json.dumps(info, indent=2, ensure_ascii=True) + '\n').encode('utf-8'))
         packaged = work / 'preview.zip'

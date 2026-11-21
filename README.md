@@ -4,11 +4,13 @@ Prototipo de navegación de NPCs desarrollado para el TFG de Germán Barrena Alo
 
 El proyecto compara dos formas de orientar un agente hacia una meta: un controlador proporcional y una adaptación de un modelo de 24 unidades PFL3 de *Drosophila melanogaster*. La aplicación permite observar sus recorridos y exportar los resultados de cada ensayo.
 
-## Primer ensayo de la PEC3
+## Alfa jugable de la PEC3
 
-Desde el menú, **Primer ensayo** abre A-00 en vista superior. Elige un rumbo y pulsa **Iniciar comparación**. El marco ámbar señala al controlador proporcional y el punto cian al PFL3. Cuando los recorridos coinciden se ven el trazo ancho y la línea fina central.
+**Primer ensayo** abre A-00. Elige el rumbo, lanza la comparación y repite para ver el tiempo de cada NPC junto al de su intento anterior. A −135° la meta queda exactamente detrás del agente. Ambos controladores reciben su dirección. En este caso las señales laterales del modelo PFL3 se equilibran y el giro es prácticamente nulo. **Casi de espaldas** reduce a 179° la diferencia inicial para explorar esa simetría.
 
-Al terminar, **Cambiar rumbo y repetir** conserva la salida, la meta y los controladores. La tabla muestra el tiempo de cada uno junto al de su intento anterior. **Configuración libre** da acceso a los escenarios A, B y C.
+Desde el menú también puedes abrir **B · Obstáculos** y **C · Cambio de meta**. En B, la arena identifica los tres discos y el panel indica cuándo se desvía cada agente. En C, el objetivo activo pasa de la primera a la segunda posición a los 10 segundos simulados. La tabla recoge cuánto tarda cada controlador en reorientarse con el criterio angular del proyecto.
+
+**Mostrar en la arena** permite aislar los recorridos superpuestos mientras los dos controladores siguen ejecutándose y exportando sus métricas. **Configuración libre** conserva las 90 configuraciones y permite observar un solo controlador. La ilustración dorsal es original del proyecto. La arena y los modelos de los NPC se construyen en Unity.
 
 ## Versión publicada de la PEC2
 

@@ -8,36 +8,6 @@ namespace NpcLab.Runtime
     // Immediate-mode UI keeps the prototype independent of UGUI/TMP packages and fonts.
     public sealed partial class LabUI
     {
-        readonly LabApp app;
-        GUIStyle body, small, heading, title, button, field, toggle;
-        readonly Color background=new Color(.035f,.055f,.08f), panel=new Color(.065f,.10f,.145f);
-        readonly Color muted=new Color(.62f,.7f,.76f), white=new Color(.91f,.95f,.96f);
-        public LabUI(LabApp app){this.app=app;}
-        void Styles()
-        {
-            if(body!=null)return;
-            body=new GUIStyle(GUI.skin.label){fontSize=17,wordWrap=true};body.normal.textColor=white;
-            small=new GUIStyle(body){fontSize=14};small.normal.textColor=muted;
-            heading=new GUIStyle(body){fontSize=24,fontStyle=FontStyle.Bold};
-            title=new GUIStyle(body){fontSize=52,fontStyle=FontStyle.Bold};
-            button=new GUIStyle(GUI.skin.button){fontSize=17,fontStyle=FontStyle.Bold};
-            button.normal.textColor=background;button.hover.textColor=background;button.active.textColor=background;
-            button.normal.background=Texture2D.whiteTexture;button.hover.background=Texture2D.whiteTexture;button.active.background=Texture2D.whiteTexture;
-            field=new GUIStyle(GUI.skin.textField){fontSize=20,padding=new RectOffset(12,12,8,8)};
-            toggle=new GUIStyle(GUI.skin.toggle){fontSize=15};toggle.normal.textColor=white;toggle.onNormal.textColor=white;
-        }
-        static string F(double x,string format="0.00"){return x.ToString(format,CultureInfo.InvariantCulture);}
-        void Box(Rect r,Color color){Color old=GUI.color;GUI.color=color;GUI.DrawTexture(r,Texture2D.whiteTexture);GUI.color=old;}
-        void Text(string t,float x,float y,float w,float h,GUIStyle style=null){GUI.Label(new Rect(x,y,w,h),t,style??body);}
-        bool Button(string t,float x,float y,float w,float h,bool primary=false)
-        {Color old=GUI.backgroundColor;GUI.backgroundColor=primary?LabWorld.Cyan:new Color(.55f,.65f,.72f);bool hit=GUI.Button(new Rect(x,y,w,h),t,button);GUI.backgroundColor=old;return hit;}
-        bool Card(string tag,string description,float x,float y,float w,float h,bool selected)
-        {
-            Box(new Rect(x,y,w,h),selected?new Color(.1f,.25f,.29f):panel);
-            if(selected)Box(new Rect(x,y,4,h),LabWorld.Cyan);
-            Text(tag,x+20,y+18,w-40,38,heading);Text(description,x+20,y+63,w-40,h-70,small);
-            return GUI.Button(new Rect(x,y,w,h),GUIContent.none,GUIStyle.none);
-        }
         public void Draw()
         {
             Styles();Matrix4x4 old=GUI.matrix;float scale=Mathf.Min(Screen.width/1440f,Screen.height/900f);
@@ -50,25 +20,6 @@ namespace NpcLab.Runtime
             else if(app.ScreenState==LabScreen.Credits)DrawCredits();
             else DrawTrial();
             GUI.matrix=old;
-        }
-        void Header(string subtitle)
-        {
-            Box(new Rect(0,0,1440,82),background);
-            Text("NPC / NAVIGATION LAB",24,16,650,34,heading);Text(subtitle,26,50,1000,26,small);
-            Text("PEC3 · v" + LabApp.AppVersion,1200,25,225,30,small);
-        }
-        void DrawTitle()
-        {
-            Box(new Rect(0,0,1440,900),background);Header("Control de orientación · TFG de Ingeniería Informática");
-            Text("Navegación bioinspirada",110,155,1200,85,title);
-            Text("¿Cómo se orientan dos NPC hacia la misma meta?",114,256,1210,55,heading);
-            Text("En el primer ensayo puedes elegir el rumbo de salida y ver qué recorrido hace cada uno.",114,321,1120,60,body);
-            if(Button("Primer ensayo",110,438,360,66,true))app.EnterGuide();
-            if(Button("Configuración libre",502,438,365,66))app.ChangeScreen(LabScreen.Setup);
-            Box(new Rect(110,581,1220,2),panel);
-            Text("La configuración libre incluye espacio abierto, obstáculos y cambio de meta.",114,616,1200,55,body);
-            if(Button("Instrucciones",110,722,260,50))app.ChangeScreen(LabScreen.Instructions);
-            if(Button("Créditos y fuentes",394,722,275,50))app.ChangeScreen(LabScreen.Credits);
         }
         void DrawSetup()
         {
@@ -83,7 +34,7 @@ namespace NpcLab.Runtime
             for(int i=0;i<3;++i)
                 if(Card(LabApp.ControllerNames[i],models[i],80+i*435,410,410,130,app.ControllerSelection==i))
                 {app.ControllerSelection=i;app.Preview();}
-            Box(new Rect(80,580,1280,130),panel);
+            Surface(new Rect(80,580,1280,130),panel,edge);
             Text("Configuración guardada",102,594,420,30,small);
             if(Button("−",102,632,50,48)){app.ConfigurationIndex--;app.LoadSelection();}
             Text(app.Selected.configurationId,175,637,200,42,heading);
@@ -95,12 +46,12 @@ namespace NpcLab.Runtime
             if(Button("Caso 180°",1200,632,140,48))app.HeadingInput=Angles.Wrap(Angles.Heading(app.Selected.goal-app.Selected.start)-180).ToString("R",CultureInfo.InvariantCulture);
             if(Button("INICIAR ENSAYO  [Enter]",80,760,470,60,true))app.StartTrial();
             if(Button("Volver al inicio",580,760,310,60))app.ChangeScreen(LabScreen.Title);
-            Text(app.Notice.Length>0?app.Notice:"Las configuraciones son de desarrollo. Los parámetros definitivos se fijarán tras el piloto.",80,843,1280,45,small);
+            Text(app.Notice.Length>0?app.Notice:"Selecciona Comparación para observar los dos NPC con las mismas condiciones de salida.",80,843,1280,45,small);
         }
         void DrawTrial()
         {
             Header(LabApp.ScenarioNames[app.ScenarioIndex]+"  /  "+app.Selected.configurationId);
-            Box(new Rect(20,100,280,780),panel);
+            Surface(new Rect(20,100,280,780),panel,edge);
             Text("SESIÓN",40,120,240,28,small);
             Text(LabApp.ControllerNames[app.ControllerSelection],40,156,240,65,heading);
             double elapsed=0;foreach(TrialEngine e in app.Engines)elapsed=Math.Max(elapsed,e.Elapsed);
@@ -128,12 +79,14 @@ namespace NpcLab.Runtime
                 if(Button("Repetir ensayo [R]",40,552,240,45,true))app.StartTrial();
                 if(Button("Cambiar configuración",40,611,240,45))app.ChangeScreen(LabScreen.Setup);
                 if(Button("Abrir carpeta CSV",40,670,240,42))app.OpenResults();
-                if(Button("Reintentar guardado",40,724,240,40))app.SaveResults();
+                if (!app.ResultsSaved && Button("Reintentar guardado",40,724,240,40))app.SaveResults();
+                if (app.ResultsSaved && Button("Menú principal",40,724,240,40))app.ChangeScreen(LabScreen.Title);
             }
             Text("Cian: PFL3\nÁmbar: proporcional",40,795,240,65,small);
             Box(new Rect(320,100,1100,3),new Color(.19f,.29f,.34f));
             Text(app.ScreenState==LabScreen.Results?"ENSAYOS FINALIZADOS":app.ScreenState==LabScreen.Paused?"PAUSA":"OBSERVACIÓN EN CURSO",340,113,620,32,small);
-            Text("Paso fijo · referencias y condiciones equivalentes",340,681,1050,27,small);
+            Text(FreeScenarioNote(),340,675,770,43,small);
+            if (app.Engines.Count == 2) DrawFilter(860, 106, 530);
             DrawMetrics();
             if(app.ScreenState==LabScreen.Results)
                 Text(app.Notice,340,164,1000,58,body);
@@ -148,9 +101,17 @@ namespace NpcLab.Runtime
                     Text("R "+F(e.RightActivity,"0.0"),1175,y+91,220,24,small);
                 }
         }
+        string FreeScenarioNote()
+        {
+            if (app.Selected.scenario == (int)ScenarioKind.MovingGoal)
+                return GoalProgress(app.Engines[0]);
+            if (app.Selected.scenario == (int)ScenarioKind.Obstacles)
+                return "Los dos controladores utilizan la misma regla de evitación local.";
+            return "La flecha del NPC marca su rumbo y la línea indica la referencia de giro.";
+        }
         void DrawMetrics()
         {
-            Box(new Rect(320,725,1100,155),panel);
+            Surface(new Rect(320,725,1100,155),panel,edge);
             string[] headings={"CONTROLADOR / ESTADO","LLEGADA","ERROR MEDIO","RECORRIDO","CONTACTOS","COSTE P95"};
             float[] xs={340,645,780,965,1120,1260};float[] widths={295,125,175,145,130,145};
             for(int j=0;j<headings.Length;++j)Text(headings[j],xs[j],738,widths[j],25,small);
@@ -162,7 +123,7 @@ namespace NpcLab.Runtime
                 Text(e.ArrivalSeconds.HasValue?F(e.ArrivalSeconds.Value)+" s":"—",xs[1],y,widths[1],32);
                 Text(e.Samples.Count>0?F(e.MeanError)+"°":"—",xs[2],y,widths[2],32);
                 Text(F(e.RouteLength)+" m",xs[3],y,widths[3],32);Text(e.Collisions.ToString(),xs[4],y,widths[4],32);
-                Text(e.Samples.Count>0?F(e.P95ControllerMs,"0.000")+" ms":"—",xs[5],y,widths[5],32);
+                Text(e.TimingEnabled && e.Samples.Count>0?F(e.P95ControllerMs,"0.000")+" ms":"—",xs[5],y,widths[5],32);
             }
         }
         public static string State(TrialState state)
@@ -173,7 +134,7 @@ namespace NpcLab.Runtime
         void DrawInstructions()
         {
             Box(new Rect(0,0,1440,900),background);Header("Instrucciones");Text("Cómo usar el laboratorio",80,130,1200,60,title);
-            Card("1  Empieza","Primer ensayo te lleva a A-00 y compara los dos NPC. Configuración libre permite elegir el escenario, el controlador y una de sus 30 configuraciones.",80,250,410,205,false);
+            Card("1  Empieza","Desde el menú puedes entrar en los tres ensayos guiados. En Configuración libre eliges escenario, controlador y condiciones iniciales.",80,250,410,205,false);
             Card("2  Observa","El NPC se orienta y avanza. Puedes pausar, alternar la vista y ver los recorridos. La meta de C cambia a los 10 s.",515,250,410,205,false);
             Card("3  Revisa","Al llegar, agotar el tiempo o detener la prueba, se guardan configuración, métricas, eventos y series temporales CSV.",950,250,410,205,false);
             Text("Enter: iniciar · Espacio / Esc: pausa y continuación · R: repetir desde resultados",80,510,1270,50,heading);

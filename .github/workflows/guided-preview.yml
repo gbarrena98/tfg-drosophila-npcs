@@ -1,7 +1,7 @@
-name: Probar el primer ensayo en Windows
+name: Probar la alfa jugable en Windows
 on:
   push:
-    branches: [pec3/bloque-1]
+    branches: [pec3/bloque-2]
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,20 +17,20 @@ jobs:
         with:
           dotnet-version: '10.0.403'
       - name: Compilar y empaquetar el Player de prueba
-        run: python Tools/build_guided_preview.py --output Builds/PEC3_Bloque1_Windows.zip
+        run: python Tools/build_guided_preview.py --output Builds/PEC3_Bloque2_Windows.zip
       - name: Probar desde el menú y comprobar los resultados exportados
         run: |
           python -m pip install --quiet Pillow
-          python Tools/test_guided_player.py Builds/PEC3_Bloque1_Windows.zip
+          python Tools/test_guided_player.py Builds/PEC3_Bloque2_Windows.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Capturas-primer-ensayo
+          name: Capturas-alfa
           path: Builds/guide-checks/
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
-          name: PEC3-Bloque1-Windows
-          path: Builds/PEC3_Bloque1_Windows.zip
+          name: PEC3-Bloque2-Windows
+          path: Builds/PEC3_Bloque2_Windows.zip
           retention-days: 30

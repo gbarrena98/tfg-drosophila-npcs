@@ -20,6 +20,10 @@ Las citas de Dorkenwald et al., Schlegel et al. y Shiu et al., junto con fuentes
 
 ## Herramientas
 
-No se incluyen DLL del editor Unity, el SDK .NET ni paquetes propietarios. El proyecto declara tres módulos integrados de Unity y no incluye recursos de Asset Store, música, texturas o tipografías externas.
+No se incluyen DLL del editor Unity, el SDK .NET ni paquetes propietarios. El proyecto declara cuatro módulos integrados de Unity y no incluye recursos de Asset Store, música, texturas o tipografías externas.
 
 Las bibliotecas oficiales usadas para verificar la compilación se identifican mediante sus huellas en `Validation/Executed/unity_api_compile.json`, sin redistribuirlas.
+
+## Ilustración y elementos de la arena
+
+La ilustración dorsal de la pantalla de inicio se dibuja con las curvas y formas definidas en `Tools/draw_fly.py` y se distribuye en `Assets/StreamingAssets/Drosophila.png`. Los cuerpos, las alas y las marcas de la arena se construyen con geometría de Unity. La interfaz utiliza las fuentes disponibles en el sistema.
