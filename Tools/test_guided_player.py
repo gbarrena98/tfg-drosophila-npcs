@@ -227,6 +227,7 @@ def check_challenges(w,used):
     w.click(160,639)
     folder,case,b=wait_for(lambda:session_matches(used,90,'guided','B-SLALOM'),'Playable slalom did not finish.')
     assert case['datasetRole']=='showcase-challenge' and len(case['obstacles'])==6
+    wait_for(lambda:w.primary_visible(65,540),'Slalom results were not drawn.')
     w.save('16-eslalon-meta')
     a,p=(csv_rows(folder/f'trace_{k}.csv') for k in ('Proportional','Pfl3'))
     peak=max(math.hypot(float(a0['x_m'])-float(p0['x_m']),float(a0['z_m'])-float(p0['z_m'])) for a0,p0 in zip(a,p))
@@ -243,6 +244,7 @@ def check_challenges(w,used):
         assert row['state']=='Success'
         ev=csv_rows(folder/f'events_{k}.csv')
         assert [(v['event'],float(v['time_s'])) for v in ev if v['event'].startswith('goal_switch')]==[('goal_switch',10),('goal_switch_2',16)]
+    wait_for(lambda:w.primary_visible(65,540),'Relay results were not drawn.')
     w.save('17-relevo-meta')
     return b,c
 
@@ -274,7 +276,8 @@ def check_workshop(w,used):
     assert d['datasetRole']=='free-workshop' and len(d['obstacles'])==3 and len(rows)==2
     disc,box,poly=d['obstacles']
     assert math.isclose(disc['radius'],1.25) and abs(disc['center']['x']+4)<.2 and abs(disc['center']['z']+1)<.2
-    assert box['shape']==1 and box['rotation']==15 and math.isclose(max(v['x'] for v in box['vertices'])-min(v['x'] for v in box['vertices']),2.75)
+    width=max(v['x'] for v in box['vertices'])-min(v['x'] for v in box['vertices'])
+    assert box['shape']==1 and math.isclose(box['rotation'],15,abs_tol=1e-8) and math.isclose(width,2.75), box
     assert poly['shape']==2 and len(poly['vertices'])==6
     assert d['start']=={'x':0,'z':-8} and d['goal']=={'x':0,'z':8}
     assert all(float(r['elapsed_s'])>0 for r in rows.values())
