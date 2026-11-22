@@ -11,13 +11,14 @@ namespace NpcLab.Runtime
         WorkshopTool tool;
         readonly List<Vec2> outline = new List<Vec2>();
         bool dragging;
+        int selectedGoal;
         Vec2 grabOffset, ghost;
         static readonly string[] ToolNames={"Mover pieza","Disco","Bloque rectangular","Polígono libre"};
         ArenaWorkshop Workshop => app.Workshop;
 
         public void ResetWorkshopTools()
         {
-            tool=WorkshopTool.Select; outline.Clear(); dragging=false;
+            tool=WorkshopTool.Select; outline.Clear(); dragging=false; selectedGoal=0;
         }
 
         static Vector2 EditPoint(Vec2 p)
@@ -120,14 +121,22 @@ namespace NpcLab.Runtime
 
         void DrawWorkshop()
         {
-            Header("Modo libre   /   Taller de obstáculos");
+            bool relay = Workshop.Kind==ScenarioKind.MovingGoal;
+            Header(relay ? "Modo libre   /   Editor de metas" : "Modo libre   /   Taller de obstáculos");
             Surface(new Rect(24,106,302,770),panel,edge);
-            Text("Taller de arena",44,128,266,45,heading);
-            Text("Elige una herramienta y pulsa sobre la pista.",45,179,251,70);
-            for(int i=0;i<ToolNames.Length;++i)
+            Text(relay ? "Editor de metas" : "Taller de arena",44,128,266,45,heading);
+            Text(relay ? "Elige una baliza y pulsa en la pista para colocarla." : "Elige una herramienta y pulsa sobre la pista.",45,179,251,75);
+            if (relay)
+            {
+                for (int i=0;i<3;++i)
+                    if(Button("Baliza "+(i+1)+"     "+F(GoalTime(i),"0")+" s",45,270+53*i,258,44,i==selectedGoal))
+                    { selectedGoal=i; Workshop.Message=""; }
+            }
+            else for(int i=0;i<ToolNames.Length;++i)
                 if(Button(ToolNames[i],45,270+53*i,258,44,i==(int)tool)) OpenTool((WorkshopTool)i);
             Box(new Rect(44,500,258,2),edge);
-            Text("Las piezas tienen el mismo contorno para ambos NPC.",45,519,246,80,small);
+            Text(relay ? "Los dos NPC reciben las mismas metas en los mismos instantes." :
+                "Las piezas tienen el mismo contorno para ambos NPC.",45,519,246,80,small);
             if(Button("Probar con ambos",45,632,258,56,true))
             {
                 if(outline.Count>0) Workshop.Message="Cierra el polígono o cancela el dibujo para probar.";
@@ -140,27 +149,83 @@ namespace NpcLab.Runtime
             }
             if(Button("Menú principal",45,794,258,44)) { app.ChangeScreen(LabScreen.Title); return; }
             Text("Vista superior",359,101,390,38,heading);
-            Text(Workshop.Draft.obstacles.Length+" / 32 piezas",831,109,239,32,caption);
+            Text(relay ? "C  /  Relevo libre" : Workshop.Draft.obstacles.Length+" / 32 piezas",831,109,239,32,caption);
             FrameEdges(LabApp.WorkshopArena,edge,0,2);
-            WorkshopMouse();
             MapLabel("Salida",EditPoint(Workshop.Draft.start)+new Vector2(12,5),68);
-            MapLabel("Meta",EditPoint(Workshop.Draft.goal)+new Vector2(12,-21),60);
-            if (Event.current.type==EventType.Repaint)
+            if (relay) DrawGoalMap();
+            else
             {
-                if(Workshop.Selected!=null) TracePiece(Workshop.Selected,dragging ? ghost : Workshop.Selected.center);
-                for(int i=0;i<outline.Count;++i)
+                WorkshopMouse();
+                MapLabel("Meta",EditPoint(Workshop.Draft.goal)+new Vector2(12,-21),60);
+                if (Event.current.type==EventType.Repaint)
                 {
-                    Vector2 v=EditPoint(outline[i]);
-                    if(i>0) Stroke(EditPoint(outline[i-1]),v,LabWorld.Amber,3);
-                    Rounded(new Rect(v.x-4,v.y-4,8,8),i==0?LabWorld.Cyan:LabWorld.Amber,4);
+                    if(Workshop.Selected!=null) TracePiece(Workshop.Selected,dragging ? ghost : Workshop.Selected.center);
+                    for(int i=0;i<outline.Count;++i)
+                    {
+                        Vector2 v=EditPoint(outline[i]);
+                        if(i>0) Stroke(EditPoint(outline[i-1]),v,LabWorld.Amber,3);
+                        Rounded(new Rect(v.x-4,v.y-4,8,8),i==0?LabWorld.Cyan:LabWorld.Amber,4);
+                    }
+                    if(outline.Count>0 && LabApp.WorkshopArena.Contains(Event.current.mousePosition))
+                        Stroke(EditPoint(outline[outline.Count-1]),Event.current.mousePosition,LabWorld.Amber,2);
                 }
-                if(outline.Count>0 && LabApp.WorkshopArena.Contains(Event.current.mousePosition))
-                    Stroke(EditPoint(outline[outline.Count-1]),Event.current.mousePosition,LabWorld.Amber,2);
             }
             Surface(new Rect(1085,106,331,681),panel,edge);
-            DrawPieceSettings();
+            if (relay) DrawGoalSettings(); else DrawPieceSettings();
             Surface(new Rect(344,806,1072,70),panel,edge);
-            Text(string.IsNullOrEmpty(Workshop.Message) ? WorkshopHint() : Workshop.Message,364,826,1027,42,body);
+            string hint = relay ? "Arrastra una baliza o selecciona su número y pulsa en un punto de la pista." : WorkshopHint();
+            Text(string.IsNullOrEmpty(Workshop.Message) ? hint : Workshop.Message,364,826,1027,42,body);
+        }
+
+        double GoalTime(int stage) => stage==0 ? 0 : stage==1 ? Workshop.Draft.goalChangeSeconds : Workshop.Draft.secondChangeSeconds;
+
+        void DrawGoalMap()
+        {
+            Rect map=LabApp.WorkshopArena;
+            Event e=Event.current;
+            int id=GUIUtility.GetControlID(73052,FocusType.Passive);
+            Vec2 point=WorldPoint(e.mousePosition);
+            if (e.type==EventType.MouseDown && e.button==0 && map.Contains(e.mousePosition))
+            {
+                for(int i=0;i<3;++i)
+                    if(Vec2.Distance(Workshop.Draft.GoalAt(i),point)<=.5) { selectedGoal=i; break; }
+                GUI.FocusControl(null);
+                GUIUtility.hotControl=id; dragging=true; ghost=point; e.Use();
+            }
+            else if(dragging && GUIUtility.hotControl==id && e.type==EventType.MouseDrag)
+            { ghost=point; e.Use(); }
+            else if(dragging && GUIUtility.hotControl==id && e.type==EventType.MouseUp)
+            {
+                dragging=false; GUIUtility.hotControl=0;
+                if(map.Contains(e.mousePosition) && Workshop.MoveGoal(selectedGoal,point)) app.RefreshWorkshop();
+                e.Use();
+            }
+            for(int i=0;i<3;++i)
+            {
+                Vector2 pt=EditPoint(dragging && i==selectedGoal ? ghost : Workshop.Draft.GoalAt(i));
+                if (i==selectedGoal) FrameEdges(new Rect(pt.x-15,pt.y-15,30,30),LabWorld.Cyan,0,2);
+                Vector2 label = new Vector2(Mathf.Clamp(pt.x+16,map.x,map.xMax-100),Mathf.Clamp(pt.y-17,map.y,map.yMax-27));
+                MapLabel("M"+(i+1)+"  ·  "+F(GoalTime(i),"0")+" s",label,100);
+            }
+        }
+
+        void DrawGoalSettings()
+        {
+            Text("Baliza "+(selectedGoal+1),1104,130,283,44,heading);
+            Vec2 pos=Workshop.Draft.GoalAt(selectedGoal);
+            Text("Posición en la pista",1105,200,282,31,small);
+            Text("X  "+F(pos.x,"0.0")+"    Z  "+F(pos.z,"0.0")+" m",1105,235,289,40,readout);
+            if(selectedGoal==0) Text("Esta baliza está activa desde la salida (0 s).",1105,310,275,85);
+            else
+            {
+                int change=Adjustment("Se activa en el segundo",F(GoalTime(selectedGoal),"0")+" s",310);
+                if(change!=0) Workshop.ChangeTime(selectedGoal,change);
+            }
+            Box(new Rect(1105,442,287,2),edge);
+            Text("Orden del relevo",1105,463,283,43,heading);
+            for (int i=0;i<3;++i)
+                Text("M"+(i+1)+"     "+F(GoalTime(i),"0")+" s",1105,524+37*i,278,32,readout);
+            Text("La bandera cambia sola en esos instantes. La llegada se mide en M3.",1105,661,278,99,small);
         }
 
         string WorkshopHint()

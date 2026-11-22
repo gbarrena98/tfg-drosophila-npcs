@@ -96,7 +96,7 @@ namespace NpcLab.Core
 
     public sealed class TrialEngine
     {
-        public const string CoreVersion = "0.3.0-alpha.3";
+        public const string CoreVersion = "0.3.0-alpha.4";
         public readonly TrialDefinition Definition;
         public readonly ControllerKind Kind;
         public readonly List<TrialSample> Samples = new List<TrialSample>();

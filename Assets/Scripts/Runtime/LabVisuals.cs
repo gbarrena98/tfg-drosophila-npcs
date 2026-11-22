@@ -16,7 +16,7 @@ namespace NpcLab.Runtime
         readonly Color muted = new Color32(163, 186, 186, 255);
         readonly Color white = new Color32(235, 242, 235, 255);
         static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
-        GUIStyle body, small, heading, title, headline, button, field, toggle, readout, caption;
+        GUIStyle body, small, heading, title, headline, button, field, toggle, readout, caption, circuitTitle;
         Texture2D fly;
         Font textFont, displayFont, numberFont;
 
@@ -44,6 +44,8 @@ namespace NpcLab.Runtime
             small.normal.textColor = muted;
             caption = new GUIStyle(small) { font = numberFont, fontSize = 14 };
             heading = new GUIStyle(body) { font = displayFont, fontSize = 27, fontStyle = FontStyle.Bold };
+            circuitTitle = new GUIStyle(heading) { fontSize = 24, alignment = TextAnchor.MiddleLeft };
+            circuitTitle.normal.textColor = ink;
             title = new GUIStyle(heading) { fontSize = 49 };
             headline = new GUIStyle(heading) { fontSize = 74 };
             readout = new GUIStyle(body) { font = numberFont, fontSize = 18 };
@@ -122,6 +124,19 @@ namespace NpcLab.Runtime
             return GUI.Button(rect, GUIContent.none, GUIStyle.none);
         }
 
+        bool CircuitCard(float x, string name, string detail)
+        {
+            Rect rect = new Rect(x,710,420,137);
+            bool hover = rect.Contains(Event.current.mousePosition);
+            Color accent = hover ? Color.Lerp(LabWorld.Cyan, white, .19f) : LabWorld.Cyan;
+            Surface(rect, panel, hover ? accent : edge);
+            Rounded(new Rect(x+2,712,416,49), accent, 6);
+            Box(new Rect(x+2,754,416,7), accent);
+            Text(name,x+20,713,380,46,circuitTitle);
+            Text(detail,x+20,776,380,59,body);
+            return GUI.Button(rect,GUIContent.none,GUIStyle.none);
+        }
+
         void Header(string subtitle)
         {
             Box(new Rect(0, 0, 1440, 83), background);
@@ -159,20 +174,22 @@ namespace NpcLab.Runtime
             Header("Arena de navegación de NPC");
             Text("Arena de",63,142,694,97,headline);
             Text("navegación",63,220,694,100,headline);
-            Text("Dos NPC compiten por la misma meta. Elige su rumbo, pronostica la llegada o construye un circuito para ponerlos a prueba.",
+            Text("Elige un circuito para comparar a los dos NPC. También puedes diseñar los obstáculos o decidir dónde y cuándo aparece cada meta.",
                 68,337,641,90);
-            if (Button("Primer ensayo",67,438,290,65,true)) app.EnterGuide();
-            if (Button("Taller de obstáculos",374,438,297,65)) app.EnterWorkshop();
-            if (Button("Configuración libre",67,528,290,48)) app.ChangeScreen(LabScreen.Setup);
+            if (Button("Taller de obstáculos",67,438,290,57)) app.EnterWorkshop();
+            if (Button("Editor de metas",374,438,297,57)) app.EnterWorkshop(ScenarioKind.MovingGoal);
+            if (Button("Ensayos del piloto",67,515,290,46)) app.ChangeScreen(LabScreen.Setup);
             ArenaPreview();
             Box(new Rect(65,637,1310,2),edge);
             Text("Selección de circuito",66,649,640,49,heading);
             if (Button("Instrucciones",986,649,163,38)) app.ChangeScreen(LabScreen.Instructions);
             if (Button("Créditos y fuentes",1164,649,211,38)) app.ChangeScreen(LabScreen.Credits);
-            if (Card("B · Eslalon de obstáculos","Seis barreras y dos trazadas posibles. Sigue a cada NPC hasta la bandera.",
-                    66,710,639,137,false)) app.EnterGuide(ScenarioKind.Obstacles);
-            if (Card("C · Relevo de balizas","Tres metas sucesivas. Observa quién recupera el rumbo después de cada cambio.",
-                    726,710,648,137,false)) app.EnterGuide(ScenarioKind.MovingGoal);
+            if (CircuitCard(66,"A  ·  Espacio abierto","Gira la salida y observa quién alcanza la meta de frente, de lado o de espaldas."))
+                app.EnterGuide();
+            if (CircuitCard(510,"B  ·  Eslalon","Seis obstáculos, una bandera. Compara por qué lado pasa cada NPC."))
+                app.EnterGuide(ScenarioKind.Obstacles);
+            if (CircuitCard(954,"C  ·  Relevo de balizas","La meta cambia a los 10 y 16 s. Sigue a los NPC cuando tengan que volver a girar."))
+                app.EnterGuide(ScenarioKind.MovingGoal);
         }
     }
 }

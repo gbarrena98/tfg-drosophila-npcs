@@ -52,7 +52,7 @@ namespace NpcLab.Runtime
                 if (Scenario == ScenarioKind.Obstacles)
                     help = "Los números identifican las barreras. Sigue las dos trazadas hasta la bandera.";
                 else if (Scenario == ScenarioKind.MovingGoal)
-                    help = "La bandera verde marca la baliza activa. Solo la última llegada cierra la carrera.";
+                    help = "La bandera verde marca la meta activa. Solo la última baliza cuenta para el tiempo de llegada.";
                 Text(help, 363, 805, 408, 64,small);
                 Text("Tu pronóstico  ·  empate hasta 0,10 s",809,762,578,35,small);
                 string[] options={"Proporcional","PFL3","Empate"};
@@ -79,6 +79,10 @@ namespace NpcLab.Runtime
             HeadingChoice("Hacia la meta", Bearing, 403);
             HeadingChoice("De espaldas", Angles.Wrap(Bearing - 180), 472);
             if (Scenario == ScenarioKind.Open) HeadingChoice("Casi de espaldas", Angles.Wrap(Bearing - 179), 541);
+            if (Scenario == ScenarioKind.MovingGoal && Button("Editar metas",45,541,257,50))
+            { app.EnterWorkshop(ScenarioKind.MovingGoal); return; }
+            if (Scenario == ScenarioKind.Obstacles && Button("Taller de obstáculos",45,541,257,50))
+            { app.EnterWorkshop(); return; }
 
             if (Button(app.Engines.Count > 0 ? "Lanzar de nuevo" : "Iniciar comparación", 45, 648, 257, 54, true))
                 app.StartTrial();
@@ -111,9 +115,9 @@ namespace NpcLab.Runtime
                 Text(hint, 46, 432, 252, 88);
                 if (Button("Cambiar rumbo y repetir", 45, 531, 257, 52, true)) app.PrepareGuide();
                 if (Button("Repetir el mismo rumbo", 45, 595, 257, 44)) app.StartTrial();
-                if (Button(app.Variant==GuideVariant.Workshop ? "Volver al taller" : "Configuración libre", 45, 652, 257, 44))
+                if (Button(app.Variant==GuideVariant.Workshop ? "Volver al editor" : "Ensayos del piloto", 45, 652, 257, 44))
                 {
-                    if(app.Variant==GuideVariant.Workshop) app.EnterWorkshop();
+                    if(app.Variant==GuideVariant.Workshop) app.EnterWorkshop(Scenario);
                     else app.ChangeScreen(LabScreen.Setup);
                 }
                 if (Button(app.ResultsSaved ? "Abrir carpeta CSV" : "Reintentar guardado", 45, 709, 257, 44))
@@ -167,8 +171,10 @@ namespace NpcLab.Runtime
                         "Cada NPC rodea las piezas con la misma regla de evitación. Puedes aislar sus recorridos con los botones inferiores.";
                     break;
                 case ScenarioKind.MovingGoal:
-                    help = app.Selected.HasThirdGoal ? "A los 10 s la baliza aparece casi a su espalda. A los 16 s cambia otra vez, mientras los NPC están en movimiento." :
-                        "Cuando la meta pasa del punto 1 al 2, observa cuándo recuperan el rumbo hacia el nuevo objetivo.";
+                    help = "La meta cambia automáticamente a los "+F(app.Selected.goalChangeSeconds,"0.#")+" s";
+                    help += app.Selected.HasThirdGoal ? " y a los "+F(app.Selected.secondChangeSeconds,"0.#")+" s." : ".";
+                    help += preparing ? " En «Editar metas» puedes colocar tres balizas y elegir los tiempos de tu propio relevo." :
+                        " Observa cuánto tarda cada NPC en recuperar el rumbo hacia la bandera verde.";
                     break;
                 default:
                     help = Opposite
@@ -308,7 +314,10 @@ namespace NpcLab.Runtime
                 for(int i=0;i<(d.HasThirdGoal ? 3 : 2);++i)
                 {
                     string state=i==stage ? "Activa" : i<stage ? "Anterior" : "Próxima";
-                    MapLabel((i+1)+" · "+state,MapPoint(d.GoalAt(i))+new Vector2(14,-15),110);
+                    Vector2 label=MapPoint(d.GoalAt(i))+new Vector2(14,-15);
+                    label.x=Mathf.Clamp(label.x,LabApp.GuideArena.x,LabApp.GuideArena.xMax-110);
+                    label.y=Mathf.Clamp(label.y,LabApp.GuideArena.y,LabApp.GuideArena.yMax-27);
+                    MapLabel((i+1)+" · "+state,label,110);
                 }
             }
             else MapLabel("Meta", MapPoint(d.goal) + new Vector2(13,-15), 57);

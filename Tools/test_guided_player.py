@@ -103,6 +103,8 @@ class GameWindow:
                 px,py=self.local_point(x,y)
                 area=frame.crop((px-1,py-2,px+2,py+3)).convert('RGB')
                 assert any(g>=70 and b>=73 and g-r>=18 for r,g,b in area.getdata()), ('Missing horizontal edge',x,y,self.width,self.height)
+        for x in (448,892,1336):
+            assert self.primary_visible(x,730), ('Circuit header missing',x,self.width,self.height)
 
     def capture(self):
         return ImageGrab.grab(bbox=(self.left, self.top, self.left + self.width, self.top + self.height), all_screens=True)
@@ -166,7 +168,7 @@ def csv_rows(path):
 
 def check_other_scenarios(window, used):
     window.click(170, 789)
-    window.click(364, 768)
+    window.click(711, 768)
     window.click(235, 291)
     window.save('08-obstaculos-salida')
     window.click(160, 674)
@@ -220,7 +222,7 @@ def check_other_scenarios(window, used):
 
 def check_challenges(w,used):
     w.click(148,747)  # Free results > home
-    w.click(350,769)
+    w.click(710,769)
     w.click(1080,829)  # PFL3 prediction
     w.save('15-eslalon')
     w.click(160,674)
@@ -253,7 +255,7 @@ def check_workshop(w,used):
     def at(x,z):
         return 708+x*652/21.3,465-z*652/21.3
     w.click(170,789)
-    w.click(498,470)
+    w.click(205,470)
     w.click(155,344)  # Disc
     w.click(*at(0,-8))  # Invalid: start gate
     w.click(*at(-3,0))
@@ -293,6 +295,47 @@ def check_workshop(w,used):
     return rows
 
 
+def check_goal_editor(w, used):
+    def at(x,z):
+        return 708+x*652/21.3,465-z*652/21.3
+    w.click(170,789)
+    w.click(1140,771)  # Fixed relay > Edit goals
+    w.click(165,565)
+    w.click(*at(-3,4))
+    w.drag(at(.8,-6.5),at(-4,-4))
+    w.click(1130,364)
+    w.click(1130,364)
+    w.click(162,396)
+    w.click(*at(5,5))
+    w.click(1130,364)
+    w.click(155,727)
+    w.save('19-editor-metas')
+    w.click(155,661)
+    w.click(155,639)
+    folder,d,rows=wait_for(lambda:session_matches(used,None,'workshop','C-TALLER-*'),'Custom relay did not finish.')
+    assert d['datasetRole']=='free-workshop' and d['goalChangeSeconds']==8 and d['secondChangeSeconds']==15
+    for key,(x,z) in zip(('goal','secondGoal','thirdGoal'),[(-3,4),(-4,-4),(5,5)]):
+        assert abs(d[key]['x']-x)<.2 and abs(d[key]['z']-z)<.2, (key,d[key])
+    saved=json.loads((TRIALS.parent/'arena-c.json').read_bytes())
+    assert all(saved[k]==d[k] for k in ('goal','secondGoal','thirdGoal','goalChangeSeconds','secondChangeSeconds'))
+    for kind,row in rows.items():
+        assert row['state']=='Success'
+        switches=[float(e['time_s']) for e in csv_rows(folder/f'events_{kind}.csv') if e['event'].startswith('goal_switch')]
+        assert switches==[8,15]
+        for s in csv_rows(folder/f'trace_{kind}.csv'):
+            t=float(s['time_s'])
+            goal=d['goal' if t<8 else 'secondGoal' if t<15 else 'thirdGoal']
+            assert (float(s['goal_x_m']),float(s['goal_z_m']))==(goal['x'],goal['z'])
+    wait_for(lambda:w.primary_visible(65,540),'Custom relay results were not drawn.')
+    w.save('20-relevo-personalizado')
+    w.click(160,674)
+    w.click(160,661)
+    w.click(155,639)
+    _,replay,_=wait_for(lambda:session_matches(used,None,'workshop','C-TALLER-*'),'Replay from goal editor did not finish.')
+    assert replay['configurationId']==d['configurationId']
+    return d
+
+
 def check_gui(archive):
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     used = set(TRIALS.iterdir()) if TRIALS.exists() else set()
@@ -306,7 +349,7 @@ def check_gui(archive):
         window = None
         try:
             window = GameWindow(wait_for(lambda: player_window(proc.pid), 'No visible Player window.'))
-            wait_for(lambda: window.primary_visible(129, 465), 'Title button was not drawn.')
+            wait_for(lambda: window.primary_visible(448,730), 'Circuit selection was not drawn.')
             window.card_borders()
             window.resize(865,520)
             window.card_borders()
@@ -316,7 +359,7 @@ def check_gui(archive):
             time.sleep(1.2)
             assert ImageChops.difference(plate,window.crop(820,176,1344,503)).getbbox(), 'The live track was static.'
             window.save('01-menu')
-            window.click(260, 470)
+            window.click(260, 768)
             wait_for(lambda: window.primary_visible(60, 674), 'Guide did not open.')
             wait_for(lambda: window.heading_arrow_visible(-45), 'Initial arrow is not visible at its world position.', 8)
             window.save('02-preparacion')
@@ -366,17 +409,32 @@ def check_gui(archive):
             assert {r['state'] for r in free.values()} == {'Aborted'}
             slalom,relay=check_challenges(window,used)
             workshop=check_workshop(window,used)
+            custom=check_goal_editor(window,used)
             proc.terminate()
             proc.wait(timeout=15)
             proc=subprocess.Popen(cmd[:-1]+[str(EVIDENCE/'Player-reapertura.log')],cwd=exe.parent)
             window=GameWindow(wait_for(lambda:player_window(proc.pid),'Player did not reopen the workshop.'))
-            wait_for(lambda:window.primary_visible(129,465),'Title was not ready after restart.')
-            window.click(500,470)
+            wait_for(lambda:window.primary_visible(448,730),'Title was not ready after restart.')
+            window.click(220,470)
             window.click(155,661)
             window.click(155,639)
             _,restored,_=wait_for(lambda:session_matches(used,0,'workshop','B-TALLER-*'),'Saved arena did not reopen.')
             assert len(restored['obstacles'])==3 and restored['obstacles'][2]['shape']==2
-            print('PASS: pilot, borders, live track, challenges, polygon editor, dragging, saving, replay and exports.', flush=True)
+            wait_for(lambda:window.primary_visible(65,540),'Restored B results were not drawn.')
+            window.click(160,789)
+            window.click(500,470)
+            window.click(155,661)
+            window.click(155,639)
+            _,restored_c,_=wait_for(lambda:session_matches(used,None,'workshop','C-TALLER-*'),'Saved relay did not reopen.')
+            assert restored_c==custom
+            wait_for(lambda:window.primary_visible(65,540),'Restored C results were not drawn.')
+            window.click(160,789)
+            window.click(1140,771)
+            window.click(160,674)
+            window.click(155,639)
+            _,fixed,_=wait_for(lambda:session_matches(used,0,'guided','C-RELEVO'),'Fixed relay lost after editing.')
+            assert fixed['goalChangeSeconds']==10 and fixed['secondChangeSeconds']==16 and fixed['goal']=={'x':0,'z':6.5}
+            print('PASS: three circuit entrances, both workshops, independent saves, timed relays, pilot and exports.', flush=True)
             report = {name: {key: {'state': row['state'], 'arrival_s': row['arrival_s']} for key, row in rows.items()}
                       for name, rows in [('lateral', first), ('hacia_meta', second), ('opuesto', opposite), ('casi_opuesto', near), ('obstaculos', obstacles), ('cambio_meta', changed_goal), ('libre', free), ('eslalon',slalom),('relevo',relay),('taller',workshop)]}
             (EVIDENCE / 'resultados.json').write_text(json.dumps(report, indent=2), encoding='utf-8')

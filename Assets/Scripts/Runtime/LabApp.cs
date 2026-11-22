@@ -12,7 +12,7 @@ namespace NpcLab.Runtime
 
     public sealed class LabApp : MonoBehaviour
     {
-        public const string AppVersion = "0.3.0-alpha.3";
+        public const string AppVersion = "0.3.0-alpha.4";
         public static readonly Rect GuideArena = new Rect(340, 112, 712, 612);
         public static readonly Rect WorkshopArena = new Rect(344, 139, 728, 652);
         public static readonly Rect MenuArena = new Rect(790, 163, 578, 348);
@@ -26,6 +26,7 @@ namespace NpcLab.Runtime
         public bool IsGuided { get; private set; }
         public GuideVariant Variant { get; private set; }
         public ArenaWorkshop Workshop { get; private set; }
+        ArenaWorkshop obstacleWorkshop, relayWorkshop;
         public double PeakSeparation { get; private set; }
         public int? Prediction { get; set; }
         public double GuideHeading { get; private set; }
@@ -51,7 +52,9 @@ namespace NpcLab.Runtime
             Time.timeScale = 1;
             World = new LabWorld();
             ui = new LabUI(this);
-            Workshop = new ArenaWorkshop(Application.persistentDataPath);
+            obstacleWorkshop = new ArenaWorkshop(Application.persistentDataPath, ScenarioKind.Obstacles);
+            relayWorkshop = new ArenaWorkshop(Application.persistentDataPath, ScenarioKind.MovingGoal);
+            Workshop = obstacleWorkshop;
             ScreenState = LabScreen.Title;
             LoadSelection();
             StartDemo();
@@ -115,8 +118,9 @@ namespace NpcLab.Runtime
             if (IsGuided) World.SetStartingHeading(Selected.start, GuideHeading);
         }
 
-        public void EnterWorkshop()
+        public void EnterWorkshop(ScenarioKind kind = ScenarioKind.Obstacles)
         {
+            Workshop = kind == ScenarioKind.MovingGoal ? relayWorkshop : obstacleWorkshop;
             ChangeScreen(LabScreen.Workshop);
             ui.ResetWorkshopTools();
             RefreshWorkshop();
@@ -130,7 +134,7 @@ namespace NpcLab.Runtime
 
         public void PlayWorkshop()
         {
-            EnterGuide(ScenarioKind.Obstacles, GuideVariant.Workshop);
+            EnterGuide(Workshop.Kind, GuideVariant.Workshop);
             StartTrial();
         }
 

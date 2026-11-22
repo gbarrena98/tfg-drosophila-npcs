@@ -24,7 +24,7 @@ namespace NpcLab.Runtime
         }
         void DrawSetup()
         {
-            Box(new Rect(0,0,1440,900),background);Header("Configuración del ensayo");
+            Box(new Rect(0,0,1440,900),background);Header("Ensayos del piloto   /   Configuración");
             Text("1  Elige un escenario",80,115,1200,40,heading);
             string[] descriptions={"Arena sin obstáculos. La meta permanece fija.","Tres obstáculos circulares y evitación geométrica común.","La meta cambia a los 10 s. Llegar a la primera no termina la prueba."};
             for(int i=0;i<3;++i)
@@ -48,6 +48,7 @@ namespace NpcLab.Runtime
             if(Button("INICIAR ENSAYO  [Enter]",80,760,470,60,true))app.StartTrial();
             if(Button("Volver al inicio",580,760,310,60))app.ChangeScreen(LabScreen.Title);
             if(app.ScenarioIndex==1 && Button("Taller de obstáculos",920,760,362,60))app.EnterWorkshop();
+            if(app.ScenarioIndex==2 && Button("Editar metas",920,760,362,60))app.EnterWorkshop(ScenarioKind.MovingGoal);
             Text(app.Notice.Length>0?app.Notice:"Selecciona Comparación para observar los dos NPC con las mismas condiciones de salida.",80,843,1280,45,small);
         }
         void DrawTrial()
@@ -138,7 +139,7 @@ namespace NpcLab.Runtime
             Box(new Rect(0,0,1440,900),background);Header("Instrucciones");Text("Cómo jugar",80,130,1200,60,title);
             Card("Elige un circuito","A enseña a orientar los NPC. B propone un eslalon y C activa tres balizas a los 0, 10 y 16 s. En B y C puedes volver al Piloto.",80,250,410,205,false);
             Card("Pronostica la llegada","Elige qué NPC llegará primero o apuesta por un empate de hasta 0,10 s. Puedes pausar y aislar un recorrido durante la carrera.",515,250,410,205,false);
-            Card("Construye en el taller","Coloca discos y bloques o dibuja un polígono. Mueve las piezas, ajusta su tamaño, guarda el diseño y pruébalo con los dos NPC.",950,250,410,205,false);
+            Card("Diseña tu circuito","En B puedes dibujar y mover obstáculos. En C abre «Editar metas», selecciona una baliza y pulsa en el mapa para colocarla. Guarda y prueba tu diseño.",950,250,410,205,false);
             Text("Enter: iniciar · Espacio / Esc: pausa y continuación · R: repetir desde resultados",80,510,1270,50,heading);
             Text("La flecha del agente muestra su rumbo. La línea que sale del cuerpo indica la referencia de giro. Cada controlador conserva su color y etiqueta.",80,590,1270,70,body);
             Text("Al terminar se guardan los CSV y el diseño de la arena. Configuración libre contiene los 90 casos del piloto. Las carreras del taller llevan un identificador propio.",80,680,1270,95,small);
@@ -161,6 +162,8 @@ namespace NpcLab.Runtime
                 if(app.ScreenState==LabScreen.Title){app.EnterGuide();e.Use();}
                 else if(app.ScreenState==LabScreen.Setup || app.ScreenState==LabScreen.GuideSetup){app.StartTrial();e.Use();}
             }
+            else if(app.ScreenState==LabScreen.Title && (e.keyCode==KeyCode.A || e.keyCode==KeyCode.B || e.keyCode==KeyCode.C))
+            { app.EnterGuide(e.keyCode==KeyCode.A ? ScenarioKind.Open : e.keyCode==KeyCode.B ? ScenarioKind.Obstacles : ScenarioKind.MovingGoal); e.Use(); }
             else if(e.keyCode==KeyCode.Space||e.keyCode==KeyCode.Escape)
             {
                 if(app.ScreenState==LabScreen.Running){app.Pause();e.Use();}

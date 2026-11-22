@@ -15,13 +15,52 @@ namespace NpcLab.Runtime
         public CircleObstacle Selected => SelectedIndex < 0 ? null : Draft.obstacles[SelectedIndex];
         public string Message { get; set; }
         public bool HasSave => File.Exists(path);
+        public ScenarioKind Kind { get; }
         readonly string path;
 
-        public ArenaWorkshop(string folder)
+        public ArenaWorkshop(string folder, ScenarioKind kind)
         {
-            path = Path.Combine(folder, "arena-b.json");
-            Draft = ArenaCourses.EmptyWorkshop();
+            Kind = kind;
+            bool relay = kind == ScenarioKind.MovingGoal;
+            path = Path.Combine(folder, relay ? "arena-c.json" : "arena-b.json");
+            Draft = relay ? ArenaCourses.RelayWorkshop() : ArenaCourses.EmptyWorkshop();
             if (HasSave) Load();
+        }
+
+        public bool MoveGoal(int stage, Vec2 point)
+        {
+            var d = Draft.Copy();
+            double limit = d.settings.arenaSize / 2 - d.settings.agentRadius;
+            if (Math.Abs(point.x) > limit || Math.Abs(point.z) > limit)
+            {
+                Message = "Coloca el centro de la baliza dentro del borde de la pista.";
+                return false;
+            }
+            if (stage == 0) d.goal = point;
+            else if (stage == 1) d.secondGoal = point;
+            else d.thirdGoal = point;
+            d.Validate();
+            Draft = d;
+            Message = "Baliza " + (stage+1) + " colocada.";
+            return true;
+        }
+
+        public void ChangeTime(int stage, int delta)
+        {
+            var d = Draft.Copy();
+            double first = d.goalChangeSeconds, last = d.secondChangeSeconds;
+            if (stage == 1) first += delta;
+            else last += delta;
+            if (first < 1 || last <= first || last >= d.settings.maxSeconds)
+            {
+                Message = "Cada relevo debe activarse después del anterior y antes de los 60 s.";
+                return;
+            }
+            d.goalChangeSeconds = first;
+            d.secondChangeSeconds = last;
+            d.Validate();
+            Draft = d;
+            Message = "Horario de las balizas actualizado.";
         }
 
         public void Select(int index) { SelectedIndex = index; Message = ""; }
@@ -85,7 +124,8 @@ namespace NpcLab.Runtime
             try
             {
                 var d=JsonUtility.FromJson<TrialDefinition>(File.ReadAllText(path));
-                if(d==null || d.datasetRole!="free-workshop" || d.scenario!=1 || d.obstacles==null || d.obstacles.Length>32)
+                if(d==null || d.datasetRole!="free-workshop" || d.scenario!=(int)Kind || d.obstacles==null || d.obstacles.Length>32 ||
+                    (Kind==ScenarioKind.MovingGoal && (!d.HasThirdGoal || d.obstacles.Length!=0)))
                     throw new ArgumentException("Archivo de taller no válido.");
                 d.Validate(); Draft=d; Select(-1); Message="Diseño recuperado."; return true;
             }
@@ -98,7 +138,7 @@ namespace NpcLab.Runtime
             using(var hash=SHA256.Create())
             {
                 byte[] digest=hash.ComputeHash(Encoding.UTF8.GetBytes(JsonText.Configuration(copy)));
-                copy.configurationId="B-TALLER-"+BitConverter.ToString(digest,0,5).Replace("-","");
+                copy.configurationId=(Kind==ScenarioKind.MovingGoal ? "C-TALLER-" : "B-TALLER-")+BitConverter.ToString(digest,0,5).Replace("-","");
             }
             return copy;
         }

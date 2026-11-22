@@ -37,5 +37,13 @@ namespace NpcLab.Core
             scenario = (int)ScenarioKind.Obstacles, index = -1, start = new Vec2(0,-8),
             goal = new Vec2(0,8), secondGoal = new Vec2(0,8), initialHeading = 0
         };
+
+        public static TrialDefinition RelayWorkshop()
+        {
+            var relay = Challenge(ScenarioKind.MovingGoal);
+            relay.configurationId = "C-TALLER";
+            relay.datasetRole = "free-workshop";
+            return relay;
+        }
     }
 }

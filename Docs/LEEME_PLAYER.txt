@@ -1,11 +1,12 @@
 DROSOPHILA NAVIGATION LAB
 TFG de Germán Barrena Alonso, UOC
-PEC3 · Alfa jugable · Versión 0.3.0-alpha.3
+PEC3 · Alfa jugable · Versión 0.3.0-alpha.4
 
 Extraer todos los archivos del ZIP y abrir DrosophilaNavigationLab.exe.
 Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
 
-Primer ensayo abre A-00. Compara los dos NPC con la meta de frente, de lado,
+Las tarjetas A, B y C abren los tres circuitos. A abre el espacio A-00.
+Compara los dos NPC con la meta de frente, de lado,
 de espaldas o casi de espaldas. En A-00, ambos conocen la dirección de la meta.
 Con una diferencia inicial de 180°, la orden de giro del PFL3 es casi nula.
 B abre el eslalon con seis obstáculos y C el relevo de tres balizas. En C el
@@ -19,7 +20,13 @@ inspector para cambiar dimensiones, girar o eliminar. Guardar diseño permite
 continuar tras cerrar el juego. Probar con ambos inicia una carrera en tu mapa.
 Los diseños del taller se identifican por separado en la exportación.
 
-Mostrar en la arena permite aislar una trayectoria. Configuración libre
+Desde C, pulsa Editar metas para preparar un relevo propio. Selecciona una
+baliza y pulsa en la pista, o arrastra su marcador. M1 está activa desde
+la salida. Los botones − y + ajustan los segundos de activación de M2 y M3.
+Guardar diseño conserva tu relevo y Probar con ambos arranca la carrera.
+El juego guarda los diseños de B y de C de forma independiente.
+
+Mostrar en la arena permite aislar una trayectoria. Ensayos del piloto
 ofrece las 90 configuraciones originales y permite probar un solo NPC.
 Enter inicia la carrera, Espacio o Esc la pausa o continúa y R la repite.
 Al terminar se exportan configuración, sesión, resumen, trazas y eventos.

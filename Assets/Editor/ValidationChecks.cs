@@ -186,6 +186,23 @@ namespace NpcLab.Verification
                     Close(pilotC.Elapsed,kind==ControllerKind.Proportional ? 14.52 : 14.54);
                 }
             });
+            r.Add("edited_relay_switches_at_its_own_times", () => {
+                var draft=ArenaCourses.RelayWorkshop();
+                draft.goal=new Vec2(-3,4); draft.secondGoal=new Vec2(-4,-4); draft.thirdGoal=new Vec2(5,5);
+                draft.goalChangeSeconds=8; draft.secondChangeSeconds=15; draft.Validate();
+                Require(draft.datasetRole=="free-workshop" && draft.configurationId=="C-TALLER","Missing workshop identity.");
+                foreach (var kind in new[]{ControllerKind.Proportional,ControllerKind.Pfl3})
+                {
+                    var engine=Complete(draft,kind);
+                    Require(engine.State==TrialState.Success && engine.GoalStage==2,"Edited relay did not finish at the last beacon.");
+                    int count=0;
+                    foreach (var ev in engine.Events)
+                        if (ev.kind.StartsWith("goal_switch",StringComparison.Ordinal)) { Close(ev.time,count==0 ? 8 : 15); ++count; }
+                    Require(count==2,"Edited relay missed a switch.");
+                }
+                var fixedCourse=ArenaCourses.Challenge(ScenarioKind.MovingGoal);
+                Close(fixedCourse.goal.z,6.5); Close(fixedCourse.goalChangeSeconds,10); Close(fixedCourse.secondChangeSeconds,16);
+            });
             return r;
         }
     }
