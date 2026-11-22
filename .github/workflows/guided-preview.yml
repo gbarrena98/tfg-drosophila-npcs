@@ -17,11 +17,11 @@ jobs:
         with:
           dotnet-version: '10.0.403'
       - name: Compilar y empaquetar el Player de prueba
-        run: python Tools/build_guided_preview.py --output Builds/PEC3_Bloque2_Windows.zip
+        run: python Tools/build_guided_preview.py --output Builds/PEC3_Bloque2_Arena_Windows.zip
       - name: Probar desde el menú y comprobar los resultados exportados
         run: |
           python -m pip install --quiet Pillow
-          python Tools/test_guided_player.py Builds/PEC3_Bloque2_Windows.zip
+          python Tools/test_guided_player.py Builds/PEC3_Bloque2_Arena_Windows.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -31,6 +31,6 @@ jobs:
           retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
-          name: PEC3-Bloque2-Windows
-          path: Builds/PEC3_Bloque2_Windows.zip
+          name: PEC3-Bloque2-Arena-Windows
+          path: Builds/PEC3_Bloque2_Arena_Windows.zip
           retention-days: 30

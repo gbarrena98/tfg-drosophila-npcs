@@ -51,11 +51,13 @@ def main():
             raise RuntimeError(f'The reproducible PEC3 build requires .NET SDK {sdk_version}.')
         compiler = Path(sdk_line.split('[', 1)[1].rstrip(']')) / sdk_version / 'Roslyn/bincore/csc.dll'
 
-        references = sorted((p for p in managed.glob('*.dll') if p != runtime), key=lambda p: p.name)
-        sources = sorted(str(p.relative_to(ROOT).as_posix()) for p in (ROOT / 'Assets/Scripts/Runtime').glob('*.cs'))
-        subprocess.run([args.dotnet, str(compiler), '-nologo', '-noconfig', '-nostdlib+', '-target:library',
-                        '-langversion:9', '-optimize+', '-deterministic+', '-warnaserror+', f'-pathmap:{ROOT}=/src',
-                        '-out:' + str(runtime), *('-r:' + str(p) for p in references), *sources], cwd=ROOT, check=True)
+        core = managed / 'NpcLab.Core.dll'
+        base_references = sorted((p for p in managed.glob('*.dll') if p not in (runtime, core)), key=lambda p: p.name)
+        for group, target, refs in [('Core', core, base_references), ('Runtime', runtime, base_references + [core])]:
+            sources = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'Assets/Scripts' / group).glob('*.cs'))
+            subprocess.run([args.dotnet, str(compiler), '-nologo', '-noconfig', '-nostdlib+', '-target:library',
+                            '-langversion:9', '-optimize+', '-deterministic+', '-warnaserror+', f'-pathmap:{ROOT}=/src',
+                            '-out:' + str(target), *('-r:' + str(p) for p in refs), *sources], cwd=ROOT, check=True)
         instructions = (ROOT / 'Docs/LEEME_PLAYER.txt').read_text(encoding='utf-8')
         (player / 'LEEME.txt').write_bytes(instructions.encode('utf-8'))
         assets = player / 'DrosophilaNavigationLab_Data/StreamingAssets'
@@ -65,7 +67,8 @@ def main():
         (player / 'THIRD_PARTY_NOTICES.md').write_bytes(notices.encode('utf-8'))
         info_path = player / 'build_info.json'
         info = json.loads(info_path.read_bytes())
-        info.update(appVersion=version, buildMethod='incremental Mono runtime assembly and streaming artwork',
+        info.update(appVersion=version, coreVersion=version, coreAssemblySha256=sha256(core),
+                    buildMethod='incremental Mono core and runtime assemblies and streaming artwork',
                     illustrationSha256=sha256(assets / 'Drosophila.png'),
                     basePlayerTag=BASE_TAG, basePlayerZipSha256=BASE_SHA, runtimeAssemblySha256=sha256(runtime))
         info_path.write_bytes((json.dumps(info, indent=2, ensure_ascii=True) + '\n').encode('utf-8'))

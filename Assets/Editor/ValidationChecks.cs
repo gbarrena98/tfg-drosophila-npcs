@@ -148,6 +148,44 @@ namespace NpcLab.Verification
                 TrialEngine e=Complete(ScenarioFactory.Create(ScenarioKind.Open,0),ControllerKind.Proportional);
                 string[] c=TrialExport.Summary(e).Split(',');Require(c[16]==""&&c[17]==""&&c[19]=="false","Disabled timing reported as measured zero.");
             });
+            r.Add("rectangular_and_concave_footprints_match_collision", () => {
+                var box=CircleObstacle.Rectangle(0,new Vec2(2,1),4,1,37);
+                Vec2 Local(double x,double z) => box.center+ObstacleGeometry.Rotate(new Vec2(x,z),box.rotation);
+                Require(ObstacleGeometry.Sweep(box,Local(0,-3),Local(0,3),.25,out double hit),"Rotated wall missed.");
+                Close(hit,(3-.75)/6);
+                Require(!ObstacleGeometry.Sweep(box,Local(2.2,.71),Local(4,.71),.25,out hit),"Empty space at a rounded corner was blocked.");
+                var p=new CircleObstacle {shape=ObstacleShape.Polygon,vertices=new[]{new Vec2(-2,-2),new Vec2(2,-2),
+                    new Vec2(2,-1),new Vec2(-1,-1),new Vec2(-1,2),new Vec2(-2,2)}};
+                ObstacleGeometry.Validate(p,10);
+                Close(ObstacleGeometry.Distance(p,new Vec2(1,1)),2);
+                Require(!ObstacleGeometry.Sweep(p,new Vec2(1.5,1),new Vec2(.2,1),.25,out hit),"The notch was treated as solid.");
+                Require(ObstacleGeometry.Sweep(p,new Vec2(1,1),new Vec2(-2,1),.25,out hit),"Concave wall missed.");
+                Close(hit,1.75/3);
+                Require(ObstacleGeometry.Triangles(p.vertices).Length==12,"Concave mesh did not triangulate.");
+                var copy=p.Copy(); copy.vertices[0]=new Vec2(5,5); Close(p.vertices[0].x,-2);
+                p.vertices=new[]{new Vec2(-2,-2),new Vec2(2,2),new Vec2(-2,2),new Vec2(2,-2)};
+                bool invalid=false; try { ObstacleGeometry.Validate(p,10); } catch(ArgumentException) { invalid=true; }
+                Require(invalid,"A self-intersecting polygon was accepted.");
+            });
+            r.Add("playable_courses_have_separate_roles_and_goal_responses", () => {
+                var b=ArenaCourses.Challenge(ScenarioKind.Obstacles);
+                var c=ArenaCourses.Challenge(ScenarioKind.MovingGoal);
+                Require(b.datasetRole=="showcase-challenge" && b.obstacles.Length==6 && ArenaCourses.EmptyWorkshop().datasetRole=="free-workshop","Course identities were mixed.");
+                foreach(var kind in new[]{ControllerKind.Proportional,ControllerKind.Pfl3})
+                {
+                    var slalom=Complete(b,kind); var relay=Complete(c,kind);
+                    Require(slalom.State==TrialState.Success && relay.State==TrialState.Success,"Nominal circuit is incomplete.");
+                    Require(relay.GoalStage==2 && relay.ReorientationSeconds.HasValue && relay.SecondReorientationSeconds.HasValue,"Missing switch response.");
+                    int switches=0;
+                    foreach(var ev in relay.Events)
+                        if(ev.kind.StartsWith("goal_switch",StringComparison.Ordinal)) { Close(ev.time,switches==0 ? 10 : 16); switches++; }
+                    Require(switches==2 && relay.Elapsed>16,"Final arrival before the relay was complete.");
+                    var pilotB=Complete(ScenarioFactory.Create(ScenarioKind.Obstacles,0),kind);
+                    var pilotC=Complete(ScenarioFactory.Create(ScenarioKind.MovingGoal,0),kind);
+                    Close(pilotB.Elapsed,kind==ControllerKind.Proportional ? 8.36 : 8.44);
+                    Close(pilotC.Elapsed,kind==ControllerKind.Proportional ? 14.52 : 14.54);
+                }
+            });
             return r;
         }
     }

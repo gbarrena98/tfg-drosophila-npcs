@@ -1,6 +1,6 @@
 DROSOPHILA NAVIGATION LAB
 TFG de Germán Barrena Alonso, UOC
-PEC3 · Alfa jugable · Versión 0.3.0-alpha.2
+PEC3 · Alfa jugable · Versión 0.3.0-alpha.3
 
 Extraer todos los archivos del ZIP y abrir DrosophilaNavigationLab.exe.
 Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
@@ -8,13 +8,20 @@ Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
 Primer ensayo abre A-00. Compara los dos NPC con la meta de frente, de lado,
 de espaldas o casi de espaldas. En A-00, ambos conocen la dirección de la meta.
 Con una diferencia inicial de 180°, la orden de giro del PFL3 es casi nula.
-Desde el menú también puedes abrir B-00 (obstáculos) y C-00 (cambio de meta).
-Usa Mostrar en la arena para aislar una trayectoria. Ambos ensayos siguen activos.
-Configuración libre permite elegir escenario, controlador y configuración.
-Enter inicia el ensayo. Espacio o Esc pausa o continúa y R repite desde los resultados.
-Los botones permiten cambiar vista, mostrar recorridos y detener con registro.
-En el escenario C la meta cambia a los 10 segundos de simulación.
+B abre el eslalon con seis obstáculos y C el relevo de tres balizas. En C el
+objetivo cambia a los 10 y 16 s. Desde Reto / Piloto puedes reproducir B-00
+y C-00. Puedes elegir un pronóstico antes de la salida. Una diferencia de
+hasta 0,10 s cuenta como empate en el juego.
 
+Taller de obstáculos abre una arena para crear trazados. Coloca discos o
+bloques, o marca vértices y cierra un polígono. Arrastra para mover y usa el
+inspector para cambiar dimensiones, girar o eliminar. Guardar diseño permite
+continuar tras cerrar el juego. Probar con ambos inicia una carrera en tu mapa.
+Los diseños del taller se identifican por separado en la exportación.
+
+Mostrar en la arena permite aislar una trayectoria. Configuración libre
+ofrece las 90 configuraciones originales y permite probar un solo NPC.
+Enter inicia la carrera, Espacio o Esc la pausa o continúa y R la repite.
 Al terminar se exportan configuración, sesión, resumen, trazas y eventos.
 Abrir carpeta CSV muestra los archivos de esa sesión. Los datos se guardan en
 la carpeta persistente del usuario, bajo Trials, fuera de esta instalación.

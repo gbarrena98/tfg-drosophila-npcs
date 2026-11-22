@@ -33,6 +33,7 @@ namespace NpcLab.Core
     public enum ControllerKind { Proportional, Pfl3 }
     public enum ScenarioKind { Open, Obstacles, MovingGoal }
     public enum TrialState { Ready, Running, Paused, Success, Timeout, Aborted }
+    public enum ObstacleShape { Disc, Rectangle, Polygon }
 
     [Serializable]
     public sealed class SimSettings
@@ -61,9 +62,23 @@ namespace NpcLab.Core
         public int id;
         public Vec2 center;
         public double radius;
+        public ObstacleShape shape;
+        public Vec2[] vertices;
+        public double rotation;
         public CircleObstacle() { }
         public CircleObstacle(int id, Vec2 center, double radius) { this.id = id; this.center = center; this.radius = radius; }
-        public CircleObstacle Copy() { return new CircleObstacle(id, center, radius); }
+        public CircleObstacle Copy()
+        {
+            var copy = (CircleObstacle)MemberwiseClone();
+            if (vertices != null) copy.vertices = (Vec2[])vertices.Clone();
+            return copy;
+        }
+        public static CircleObstacle Rectangle(int id, Vec2 center, double width, double depth, double angle)
+        {
+            double x = width / 2, z = depth / 2;
+            return new CircleObstacle { id = id, center = center, shape = ObstacleShape.Rectangle, rotation = angle,
+                vertices = new[] { new Vec2(-x,-z), new Vec2(x,-z), new Vec2(x,z), new Vec2(-x,z) } };
+        }
     }
 
     [Serializable]
@@ -74,6 +89,10 @@ namespace NpcLab.Core
         public uint seed;
         public Vec2 start, goal, secondGoal;
         public double initialHeading, goalChangeSeconds = -1;
+        public Vec2 thirdGoal;
+        public double secondChangeSeconds;
+        public bool HasThirdGoal => scenario == (int)ScenarioKind.MovingGoal && secondChangeSeconds > 0;
+        public Vec2 GoalAt(int stage) => stage == 0 ? goal : stage == 1 ? secondGoal : thirdGoal;
         public CircleObstacle[] obstacles = new CircleObstacle[0];
         public SimSettings settings = new SimSettings();
         public TrialDefinition Copy()
@@ -89,21 +108,23 @@ namespace NpcLab.Core
             settings.Validate();
             if (scenario < 0 || scenario > 2 || !Angles.Finite(initialHeading)) throw new ArgumentException("Invalid scenario or heading.");
             double half = settings.arenaSize / 2 - settings.agentRadius;
-            foreach (Vec2 v in new[] { start, goal, secondGoal })
+            Vec2[] anchors = HasThirdGoal ? new[] { start, goal, secondGoal, thirdGoal } : new[] { start, goal, secondGoal };
+            foreach (Vec2 v in anchors)
                 if (!Angles.Finite(v.x) || !Angles.Finite(v.z) || Math.Abs(v.x) > half || Math.Abs(v.z) > half)
                     throw new ArgumentException("Position outside the arena.");
             if (!Angles.Finite(goalChangeSeconds) || (scenario == 2 && (goalChangeSeconds <= 0 || goalChangeSeconds >= settings.maxSeconds)))
                 throw new ArgumentException("The goal switch must precede timeout.");
+            if (!Angles.Finite(secondChangeSeconds) || secondChangeSeconds < 0 || (secondChangeSeconds > 0 &&
+                (!HasThirdGoal || secondChangeSeconds < goalChangeSeconds + settings.dt || secondChangeSeconds >= settings.maxSeconds)))
+                throw new ArgumentException("El segundo cambio debe quedar entre el primero y el límite de tiempo.");
             HashSet<int> ids = new HashSet<int>();
             foreach (CircleObstacle o in obstacles)
             {
-                if (o == null || o.id < 0 || !ids.Add(o.id) || !Angles.Finite(o.radius) || o.radius <= 0 ||
-                    !Angles.Finite(o.center.x) || !Angles.Finite(o.center.z)) throw new ArgumentException("Invalid obstacle.");
-                if (Math.Abs(o.center.x) + o.radius > settings.arenaSize / 2 || Math.Abs(o.center.z) + o.radius > settings.arenaSize / 2)
-                    throw new ArgumentException("Obstacle extends outside the arena.");
-                foreach (Vec2 v in new[] { start, goal, secondGoal })
-                    if (Vec2.Distance(v, o.center) < o.radius + settings.agentRadius + 0.05)
-                        throw new ArgumentException("Start or goal overlaps an obstacle.");
+                if (o == null || o.id < 0 || !ids.Add(o.id)) throw new ArgumentException("Identificador de obstáculo no válido.");
+                ObstacleGeometry.Validate(o, settings.arenaSize / 2);
+                foreach (Vec2 v in anchors)
+                    if (ObstacleGeometry.Distance(o, v) < settings.agentRadius + 0.05)
+                        throw new ArgumentException("Deja libres la salida y la meta.");
             }
         }
     }

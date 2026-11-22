@@ -78,6 +78,32 @@ class GameWindow:
         user32.mouse_event(4, 0, 0, 0, 0)
         time.sleep(.25)
 
+    def drag(self, start, end):
+        a,b=self.local_point(*start),self.local_point(*end)
+        user32.SetCursorPos(self.left+a[0],self.top+a[1])
+        user32.mouse_event(2,0,0,0,0)
+        for i in range(1,9):
+            time.sleep(.06)
+            user32.SetCursorPos(self.left+round(a[0]+(b[0]-a[0])*i/8),self.top+round(a[1]+(b[1]-a[1])*i/8))
+        time.sleep(.15)
+        user32.mouse_event(4,0,0,0,0)
+        time.sleep(.35)
+
+    def resize(self,width,height):
+        rect=wintypes.RECT()
+        user32.GetWindowRect(self.hwnd,ctypes.byref(rect))
+        user32.SetWindowPos(self.hwnd,0,0,0,width+rect.right-rect.left-self.width,height+rect.bottom-rect.top-self.height,0x16)
+        time.sleep(.8)
+        self.__init__(self.hwnd)
+
+    def card_borders(self):
+        frame=self.capture()
+        for x in (140,345,625,810,1020,1290):
+            for y in (711,846):
+                px,py=self.local_point(x,y)
+                area=frame.crop((px-1,py-2,px+2,py+3)).convert('RGB')
+                assert any(g>=70 and b>=73 and g-r>=18 for r,g,b in area.getdata()), ('Missing horizontal edge',x,y,self.width,self.height)
+
     def capture(self):
         return ImageGrab.grab(bbox=(self.left, self.top, self.left + self.width, self.top + self.height), all_screens=True)
 
@@ -125,7 +151,7 @@ def session_matches(used, heading, mode, case):
                 rows = {r['controller']: r for r in csv.DictReader(src)}
         except (OSError, ValueError, KeyError):
             continue
-        if (len(rows) == 2 and config['configurationId'] == case and
+        if (len(rows) == 2 and (config['configurationId'] == case or (case.endswith('*') and config['configurationId'].startswith(case[:-1]))) and
                 (heading is None or math.isclose(config['initialHeading'], heading, abs_tol=1e-8)) and
                 'mode ' + mode in session['environment']):
             used.add(folder)
@@ -141,6 +167,7 @@ def csv_rows(path):
 def check_other_scenarios(window, used):
     window.click(170, 789)
     window.click(364, 768)
+    window.click(235, 291)
     window.save('08-obstaculos-salida')
     window.click(160, 674)
     time.sleep(2)
@@ -170,6 +197,7 @@ def check_other_scenarios(window, used):
 
     window.click(170, 789)
     window.click(1039, 770)
+    window.click(235, 291)
     wait_for(lambda: window.goal_is_green(0,3) and not window.goal_is_green(6,6), 'Expected first active goal in C.', 10)
     window.save('11-cambio-salida')
     window.click(160, 674)
@@ -190,6 +218,78 @@ def check_other_scenarios(window, used):
     return obstacles, changed_goal
 
 
+def check_challenges(w,used):
+    w.click(148,747)  # Free results > home
+    w.click(350,769)
+    w.click(1080,829)  # PFL3 prediction
+    w.save('15-eslalon')
+    w.click(160,674)
+    w.click(160,639)
+    folder,case,b=wait_for(lambda:session_matches(used,90,'guided','B-SLALOM'),'Playable slalom did not finish.')
+    assert case['datasetRole']=='showcase-challenge' and len(case['obstacles'])==6
+    w.save('16-eslalon-meta')
+    a,p=(csv_rows(folder/f'trace_{k}.csv') for k in ('Proportional','Pfl3'))
+    peak=max(math.hypot(float(a0['x_m'])-float(p0['x_m']),float(a0['z_m'])-float(p0['z_m'])) for a0,p0 in zip(a,p))
+    assert peak>2 and all(v['state']=='Success' for v in b.values())
+    w.click(170,789)
+    w.click(1040,769)
+    w.click(160,674)
+    w.click(160,639)
+    folder,case,c=wait_for(lambda:session_matches(used,0,'guided','C-RELEVO'),'Playable relay did not finish.')
+    assert case['datasetRole']=='showcase-challenge' and case['secondChangeSeconds']==16
+    responses=csv_rows(folder/'goal_responses.csv')
+    assert len(responses)==4 and all(row['reorientation_s'] for row in responses)
+    for k,row in c.items():
+        assert row['state']=='Success'
+        ev=csv_rows(folder/f'events_{k}.csv')
+        assert [(v['event'],float(v['time_s'])) for v in ev if v['event'].startswith('goal_switch')]==[('goal_switch',10),('goal_switch_2',16)]
+    w.save('17-relevo-meta')
+    return b,c
+
+
+def check_workshop(w,used):
+    def at(x,z):
+        return 708+x*652/21.3,465-z*652/21.3
+    w.click(170,789)
+    w.click(498,470)
+    w.click(155,344)  # Disc
+    w.click(*at(0,-8))  # Invalid: start gate
+    w.click(*at(-3,0))
+    w.click(1362,362)
+    w.drag(at(-3,0),at(-4,-1))
+    w.click(155,397)  # Rectangle
+    w.click(*at(2,-2))
+    w.click(1362,341)
+    w.click(1362,541)
+    w.click(155,450)  # Free polygon
+    for v in [(0,2),(3,2),(3,3),(1,3),(1,5),(0,5)]:
+        w.click(*at(*v))
+    w.click(1230,365)
+    w.click(155,727)
+    w.click(155,727)  # Replace the same saved design atomically
+    w.save('18-taller')
+    w.click(155,661)
+    w.click(155,639)
+    folder,d,rows=wait_for(lambda:session_matches(used,0,'workshop','B-TALLER-*'),'Workshop did not export.')
+    assert d['datasetRole']=='free-workshop' and len(d['obstacles'])==3 and len(rows)==2
+    disc,box,poly=d['obstacles']
+    assert math.isclose(disc['radius'],1.25) and abs(disc['center']['x']+4)<.2 and abs(disc['center']['z']+1)<.2
+    assert box['shape']==1 and box['rotation']==15 and math.isclose(max(v['x'] for v in box['vertices'])-min(v['x'] for v in box['vertices']),2.75)
+    assert poly['shape']==2 and len(poly['vertices'])==6
+    assert d['start']=={'x':0,'z':-8} and d['goal']=={'x':0,'z':8}
+    assert all(float(r['elapsed_s'])>0 for r in rows.values())
+    saved=TRIALS.parent/'arena-b.json'
+    assert json.loads(saved.read_bytes())['obstacles']==d['obstacles']
+    w.click(155,674)  # Return to editor
+    w.click(*at(-4,-1))
+    w.click(1230,709)  # Delete disc
+    w.click(155,661)
+    w.click(155,639)
+    _,edited,_=wait_for(lambda:session_matches(used,0,'workshop','B-TALLER-*'),'Edited workshop did not export.')
+    assert len(edited['obstacles'])==2 and edited['configurationId']!=d['configurationId']
+    return rows
+
+
 def check_gui(archive):
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     used = set(TRIALS.iterdir()) if TRIALS.exists() else set()
@@ -204,8 +304,14 @@ def check_gui(archive):
         try:
             window = GameWindow(wait_for(lambda: player_window(proc.pid), 'No visible Player window.'))
             wait_for(lambda: window.primary_visible(129, 465), 'Title button was not drawn.')
-            plate = window.crop(828,155,1344,515)
-            assert sum(r>115 and r>g*1.22 and g>b*1.16 for r,g,b in plate.getdata()) > 250, 'The fly illustration is missing.'
+            window.card_borders()
+            window.resize(865,520)
+            window.card_borders()
+            window.save('00-menu-panoramico')
+            window.resize(960,600)
+            plate = window.crop(820,176,1344,503)
+            time.sleep(1.2)
+            assert ImageChops.difference(plate,window.crop(820,176,1344,503)).getbbox(), 'The live track was static.'
             window.save('01-menu')
             window.click(260, 470)
             wait_for(lambda: window.primary_visible(60, 674), 'Guide did not open.')
@@ -255,9 +361,21 @@ def check_gui(archive):
             window.click(135, 634)
             _, _, free = wait_for(lambda: session_matches(used, None, 'free', 'B-00'), 'Free B-00 did not export.')
             assert {r['state'] for r in free.values()} == {'Aborted'}
-            print('PASS: four A headings, B avoidance/filter/repeat, C wait and switch at 10 s, free mode and CSVs.', flush=True)
+            slalom,relay=check_challenges(window,used)
+            workshop=check_workshop(window,used)
+            proc.terminate()
+            proc.wait(timeout=15)
+            proc=subprocess.Popen(cmd[:-1]+[str(EVIDENCE/'Player-reapertura.log')],cwd=exe.parent)
+            window=GameWindow(wait_for(lambda:player_window(proc.pid),'Player did not reopen the workshop.'))
+            wait_for(lambda:window.primary_visible(129,465),'Title was not ready after restart.')
+            window.click(500,470)
+            window.click(155,661)
+            window.click(155,639)
+            _,restored,_=wait_for(lambda:session_matches(used,0,'workshop','B-TALLER-*'),'Saved arena did not reopen.')
+            assert len(restored['obstacles'])==3 and restored['obstacles'][2]['shape']==2
+            print('PASS: pilot, borders, live track, challenges, polygon editor, dragging, saving, replay and exports.', flush=True)
             report = {name: {key: {'state': row['state'], 'arrival_s': row['arrival_s']} for key, row in rows.items()}
-                      for name, rows in [('lateral', first), ('hacia_meta', second), ('opuesto', opposite), ('casi_opuesto', near), ('obstaculos', obstacles), ('cambio_meta', changed_goal), ('libre', free)]}
+                      for name, rows in [('lateral', first), ('hacia_meta', second), ('opuesto', opposite), ('casi_opuesto', near), ('obstaculos', obstacles), ('cambio_meta', changed_goal), ('libre', free), ('eslalon',slalom),('relevo',relay),('taller',workshop)]}
             (EVIDENCE / 'resultados.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         finally:
             if window is not None:
@@ -265,7 +383,7 @@ def check_gui(archive):
             if proc.poll() is None:
                 proc.terminate()
                 proc.wait(timeout=15)
-    log = (EVIDENCE / 'Player.log').read_text(encoding='utf-8', errors='replace')
+    log = '\n'.join(p.read_text(encoding='utf-8', errors='replace') for p in EVIDENCE.glob('Player*.log'))
     for fault in ['NullReferenceException', 'MissingMethodException', 'TypeLoadException', 'IndexOutOfRangeException',
                   'MissingReferenceException', 'Serialization layout', 'Could not load file or assembly']:
         assert fault.casefold() not in log.casefold(), fault

@@ -27,7 +27,7 @@ namespace NpcLab.Core
         {
             SimSettings s = d.settings;
             StringBuilder b = new StringBuilder();
-            b.Append("{\n  \"schemaVersion\":\"1\",\n  \"configurationId\":").Append(Quote(d.configurationId));
+            b.Append("{\n  \"schemaVersion\":").Append(Quote(d.schemaVersion)).Append(",\n  \"configurationId\":").Append(Quote(d.configurationId));
             b.Append(",\n  \"datasetRole\":").Append(Quote(d.datasetRole));
             b.Append(",\n  \"scenario\":").Append(d.scenario).Append(",\n  \"index\":").Append(d.index);
             b.Append(",\n  \"seed\":").Append(d.seed.ToString(CultureInfo.InvariantCulture));
@@ -35,6 +35,8 @@ namespace NpcLab.Core
             b.Append(",\n  \"secondGoal\":").Append(Vec(d.secondGoal));
             b.Append(",\n  \"initialHeading\":").Append(Angles.Number(d.initialHeading));
             b.Append(",\n  \"goalChangeSeconds\":").Append(Angles.Number(d.goalChangeSeconds));
+            if (d.HasThirdGoal)
+                b.Append(",\n  \"thirdGoal\":").Append(Vec(d.thirdGoal)).Append(",\n  \"secondChangeSeconds\":").Append(Angles.Number(d.secondChangeSeconds));
             b.Append(",\n  \"settings\":{");
             string[] names = { "dt","arenaSize","maxSeconds","maxSpeed","maxTurn","arrivalRadius","agentRadius",
                 "proportionalGain","pfl3Gain","tau","lookAhead","clearance","reorientDegrees","reorientDwell" };
@@ -46,7 +48,14 @@ namespace NpcLab.Core
             {
                 CircleObstacle o = d.obstacles[i]; if (i > 0) b.Append(',');
                 b.Append("{\"id\":").Append(o.id).Append(",\"center\":").Append(Vec(o.center));
-                b.Append(",\"radius\":").Append(Angles.Number(o.radius)).Append('}');
+                b.Append(",\"radius\":").Append(Angles.Number(o.radius));
+                if (o.shape != ObstacleShape.Disc)
+                {
+                    b.Append(",\"shape\":").Append((int)o.shape).Append(",\"rotation\":").Append(Angles.Number(o.rotation)).Append(",\"vertices\":[");
+                    for (int j=0;j<o.vertices.Length;++j) { if (j>0) b.Append(','); b.Append(Vec(o.vertices[j])); }
+                    b.Append(']');
+                }
+                b.Append('}');
             }
             return b.Append("]\n}\n").ToString();
         }
@@ -94,6 +103,18 @@ namespace NpcLab.Core
                     }
                     using (StreamWriter w = new StreamWriter(Path.Combine(folder, "events_" + e.Kind + ".csv"), false, new UTF8Encoding(false)))
                     { w.WriteLine("time_s,event"); foreach (TrialEvent ev in e.Events) w.WriteLine(N(ev.time) + "," + Csv(ev.kind)); }
+                }
+            }
+            if (trials[0].Definition.HasThirdGoal)
+            {
+                using (var w = new StreamWriter(Path.Combine(folder, "goal_responses.csv"), false, new UTF8Encoding(false)))
+                {
+                    w.WriteLine("controller,goal_number,switch_s,reorientation_s");
+                    foreach (TrialEngine e in trials)
+                    {
+                        if (e.GoalStage >= 1) w.WriteLine(Csv(e.Kind.ToString()) + ",2," + N(e.Definition.goalChangeSeconds) + "," + Nullable(e.ReorientationSeconds));
+                        if (e.GoalStage >= 2) w.WriteLine(Csv(e.Kind.ToString()) + ",3," + N(e.Definition.secondChangeSeconds) + "," + Nullable(e.SecondReorientationSeconds));
+                    }
                 }
             }
         }

@@ -14,6 +14,7 @@ namespace NpcLab.Runtime
             GUI.matrix=Matrix4x4.TRS(new Vector3((Screen.width-1440*scale)/2,(Screen.height-900*scale)/2,0),Quaternion.identity,new Vector3(scale,scale,1));
             HandleKeys();
             if(app.ScreenState==LabScreen.Title)DrawTitle();
+            else if(app.ScreenState==LabScreen.Workshop)DrawWorkshop();
             else if(app.IsGuided)DrawGuide();
             else if(app.ScreenState==LabScreen.Setup)DrawSetup();
             else if(app.ScreenState==LabScreen.Instructions)DrawInstructions();
@@ -46,6 +47,7 @@ namespace NpcLab.Runtime
             if(Button("Caso 180°",1200,632,140,48))app.HeadingInput=Angles.Wrap(Angles.Heading(app.Selected.goal-app.Selected.start)-180).ToString("R",CultureInfo.InvariantCulture);
             if(Button("INICIAR ENSAYO  [Enter]",80,760,470,60,true))app.StartTrial();
             if(Button("Volver al inicio",580,760,310,60))app.ChangeScreen(LabScreen.Title);
+            if(app.ScenarioIndex==1 && Button("Taller de obstáculos",920,760,362,60))app.EnterWorkshop();
             Text(app.Notice.Length>0?app.Notice:"Selecciona Comparación para observar los dos NPC con las mismas condiciones de salida.",80,843,1280,45,small);
         }
         void DrawTrial()
@@ -133,13 +135,13 @@ namespace NpcLab.Runtime
         }
         void DrawInstructions()
         {
-            Box(new Rect(0,0,1440,900),background);Header("Instrucciones");Text("Cómo usar el laboratorio",80,130,1200,60,title);
-            Card("1  Empieza","Desde el menú puedes entrar en los tres ensayos guiados. En Configuración libre eliges escenario, controlador y condiciones iniciales.",80,250,410,205,false);
-            Card("2  Observa","El NPC se orienta y avanza. Puedes pausar, alternar la vista y ver los recorridos. La meta de C cambia a los 10 s.",515,250,410,205,false);
-            Card("3  Revisa","Al llegar, agotar el tiempo o detener la prueba, se guardan configuración, métricas, eventos y series temporales CSV.",950,250,410,205,false);
+            Box(new Rect(0,0,1440,900),background);Header("Instrucciones");Text("Cómo jugar",80,130,1200,60,title);
+            Card("Elige un circuito","A enseña a orientar los NPC. B propone un eslalon y C activa tres balizas a los 0, 10 y 16 s. En B y C puedes volver al Piloto.",80,250,410,205,false);
+            Card("Pronostica la llegada","Elige qué NPC llegará primero o apuesta por un empate de hasta 0,10 s. Puedes pausar y aislar un recorrido durante la carrera.",515,250,410,205,false);
+            Card("Construye en el taller","Coloca discos y bloques o dibuja un polígono. Mueve las piezas, ajusta su tamaño, guarda el diseño y pruébalo con los dos NPC.",950,250,410,205,false);
             Text("Enter: iniciar · Espacio / Esc: pausa y continuación · R: repetir desde resultados",80,510,1270,50,heading);
             Text("La flecha del agente muestra su rumbo. La línea que sale del cuerpo indica la referencia de giro. Cada controlador conserva su color y etiqueta.",80,590,1270,70,body);
-            Text("El error medio es la media temporal del valor absoluto del error circular respecto a la referencia. En C, llegar a la primera meta no termina el ensayo. El caso exacto de 180° conserva una limitación del modelo PFL3.",80,680,1270,95,small);
+            Text("Al terminar se guardan los CSV y el diseño de la arena. Configuración libre contiene los 90 casos del piloto. Las carreras del taller llevan un identificador propio.",80,680,1270,95,small);
             if(Button("Volver al inicio",80,805,330,55,true))app.ChangeScreen(LabScreen.Title);
         }
         void DrawCredits()
@@ -163,6 +165,8 @@ namespace NpcLab.Runtime
             {
                 if(app.ScreenState==LabScreen.Running){app.Pause();e.Use();}
                 else if(app.ScreenState==LabScreen.Paused){app.Resume();e.Use();}
+                else if(e.keyCode==KeyCode.Escape && app.ScreenState==LabScreen.Workshop)
+                { if(tool!=WorkshopTool.Select || dragging) { GUIUtility.hotControl=0; ResetWorkshopTools(); } else app.ChangeScreen(LabScreen.Title); e.Use(); }
                 else if(e.keyCode==KeyCode.Escape&&(app.ScreenState==LabScreen.Instructions||app.ScreenState==LabScreen.Credits||app.ScreenState==LabScreen.Setup||app.ScreenState==LabScreen.GuideSetup)){app.ChangeScreen(LabScreen.Title);e.Use();}
             }
             else if(e.keyCode==KeyCode.R&&app.ScreenState==LabScreen.Results){app.StartTrial();e.Use();}

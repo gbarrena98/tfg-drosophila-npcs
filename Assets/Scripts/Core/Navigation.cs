@@ -26,7 +26,7 @@ namespace NpcLab.Core
             foreach (CircleObstacle o in d.obstacles)
             {
                 double hit;
-                if (SegmentCircle(from, to, o.center, o.radius + d.settings.agentRadius, out hit))
+                if (ObstacleGeometry.Sweep(o, from, to, d.settings.agentRadius, out hit))
                     earliest = Math.Min(earliest, hit);
             }
             double safeFraction = Math.Max(0, earliest - (earliest < 1 ? 1e-7 / Math.Max(1e-12, Vec2.Distance(from, to)) : 0));
@@ -38,7 +38,7 @@ namespace NpcLab.Core
             if (result.z > h) { result.z = h; contacts.Add(-4); }
             // Preserve contact identity while tangent/blocked, avoiding one collision per tick.
             foreach (CircleObstacle o in d.obstacles)
-                if (Vec2.Distance(result, o.center) <= o.radius + d.settings.agentRadius + 1e-5) contacts.Add(o.id);
+                if (ObstacleGeometry.Distance(o, result) <= d.settings.agentRadius + 1e-5) contacts.Add(o.id);
             if (Math.Abs(result.x + h) < 1e-8) contacts.Add(-1);
             if (Math.Abs(result.x - h) < 1e-8) contacts.Add(-2);
             if (Math.Abs(result.z + h) < 1e-8) contacts.Add(-3);
@@ -62,27 +62,22 @@ namespace NpcLab.Core
             MinimumClearance = d.settings.lookAhead;
             foreach (CircleObstacle o in d.obstacles)
             {
-                double distance = Vec2.Distance(position, o.center);
-                MinimumClearance = Math.Min(MinimumClearance, Math.Max(0, distance - o.radius - d.settings.agentRadius));
+                MinimumClearance = Math.Min(MinimumClearance, Math.Max(0, ObstacleGeometry.Distance(o,position) - d.settings.agentRadius));
                 double t;
                 Vec2 end = position + direction * Math.Min(delta.Length, d.settings.lookAhead);
-                if (Geometry.SegmentCircle(position, end, o.center,
-                    o.radius + d.settings.agentRadius + d.settings.clearance, out t) && t < nearest)
+                if (ObstacleGeometry.Sweep(o, position, end, d.settings.agentRadius + d.settings.clearance, out t) && t < nearest)
                 { threat = o; nearest = t; }
             }
             if (threat == null) { tracked = -1; return Angles.Heading(delta); }
-            Vec2 toward = threat.center - position;
-            double desired = Angles.Heading(delta), centerHeading = Angles.Heading(toward);
-            double radius = threat.radius + d.settings.agentRadius + d.settings.clearance;
-            double offset = Math.Asin(Angles.Clamp(radius / Math.Max(radius, toward.Length), 0, 1)) / Angles.ToRadians + 8;
+            double desired = Angles.Heading(delta);
+            ObstacleGeometry.Silhouette(threat, position, d.settings.agentRadius + d.settings.clearance, out double left, out double right);
             if (tracked != threat.id)
             {
-                double left = Angles.Wrap(centerHeading - offset), right = Angles.Wrap(centerHeading + offset);
-                double l = Math.Abs(Angles.Wrap(left - heading)) + 0.25 * Math.Abs(Angles.Wrap(left - desired));
-                double r = Math.Abs(Angles.Wrap(right - heading)) + 0.25 * Math.Abs(Angles.Wrap(right - desired));
+                double l = Math.Abs(Angles.Wrap(Angles.Wrap(left) - heading)) + 0.25 * Math.Abs(Angles.Wrap(Angles.Wrap(left) - desired));
+                double r = Math.Abs(Angles.Wrap(Angles.Wrap(right) - heading)) + 0.25 * Math.Abs(Angles.Wrap(Angles.Wrap(right) - desired));
                 turnSide = r <= l ? 1 : -1; tracked = threat.id;
             }
-            return Angles.Wrap(centerHeading + turnSide * offset);
+            return Angles.Wrap(turnSide < 0 ? left : right);
         }
     }
 
@@ -101,7 +96,7 @@ namespace NpcLab.Core
 
     public sealed class TrialEngine
     {
-        public const string CoreVersion = "0.2.0-pec2";
+        public const string CoreVersion = "0.3.0-alpha.3";
         public readonly TrialDefinition Definition;
         public readonly ControllerKind Kind;
         public readonly List<TrialSample> Samples = new List<TrialSample>();
@@ -114,8 +109,12 @@ namespace NpcLab.Core
         public double ReferenceHeading { get; private set; }
         public double RouteLength { get; private set; }
         public int Collisions { get; private set; }
-        public bool GoalSwitched { get; private set; }
+        public int GoalStage { get; private set; }
+        public bool GoalSwitched => GoalStage > 0;
+        public bool HasNextGoal => Definition.scenario == (int)ScenarioKind.MovingGoal && GoalStage < (Definition.HasThirdGoal ? 2 : 1);
+        public double NextChangeSeconds => GoalStage == 0 ? Definition.goalChangeSeconds : Definition.secondChangeSeconds;
         public double? ReorientationSeconds { get; private set; }
+        public double? SecondReorientationSeconds { get; private set; }
         public double? ArrivalSeconds { get { return State == TrialState.Success ? (double?)Elapsed : null; } }
         public bool TimingEnabled { get { return measureTime; } }
         public double LeftActivity { get { return controller.LeftActivity; } }
@@ -164,9 +163,14 @@ namespace NpcLab.Core
             double time = steps * s.dt;
             double dt = Math.Min(s.dt, s.maxSeconds - time);
             if (dt <= 1e-12) { State = TrialState.Timeout; return; }
-            if (Definition.scenario == 2 && !GoalSwitched && time + 1e-10 >= Definition.goalChangeSeconds)
-            { Goal = Definition.secondGoal; GoalSwitched = true; Events.Add(new TrialEvent(time, "goal_switch")); }
-            bool waiting = Definition.scenario == 2 && !GoalSwitched && Vec2.Distance(Position, Goal) <= s.arrivalRadius;
+            if (HasNextGoal && time + 1e-10 >= NextChangeSeconds)
+            {
+                GoalStage++;
+                Goal = Definition.GoalAt(GoalStage);
+                inBandSince = double.NaN;
+                Events.Add(new TrialEvent(time, GoalStage == 1 ? "goal_switch" : "goal_switch_2"));
+            }
+            bool waiting = HasNextGoal && Vec2.Distance(Position, Goal) <= s.arrivalRadius;
             double direct = Vec2.Distance(Position, Goal) < 1e-10 ? Heading : Angles.Heading(Goal - Position);
             ReferenceHeading = waiting ? Heading : navigator.Reference(Position, Heading, Goal, Definition);
             double error = Angles.Wrap(ReferenceHeading - Heading);
@@ -186,13 +190,16 @@ namespace NpcLab.Core
             if (!waiting) { activeError += Math.Abs(error) * dt; activeTime += dt; }
             if (GoalSwitched) { afterError += Math.Abs(error) * dt; afterTime += dt; }
             else { beforeError += Math.Abs(error) * dt; beforeTime += dt; }
-            if (GoalSwitched && !ReorientationSeconds.HasValue)
+            if (GoalSwitched && !(GoalStage == 1 ? ReorientationSeconds : SecondReorientationSeconds).HasValue)
             {
                 if (Math.Abs(error) < s.reorientDegrees)
                 {
                     if (double.IsNaN(inBandSince)) inBandSince = time;
                     if (time + dt - inBandSince + 1e-10 >= s.reorientDwell)
-                        ReorientationSeconds = Math.Max(0, inBandSince - Definition.goalChangeSeconds);
+                    {
+                        if (GoalStage == 1) ReorientationSeconds = Math.Max(0, inBandSince - Definition.goalChangeSeconds);
+                        else SecondReorientationSeconds = Math.Max(0, inBandSince - Definition.secondChangeSeconds);
+                    }
                 }
                 else inBandSince = double.NaN;
             }
@@ -205,7 +212,7 @@ namespace NpcLab.Core
             steps++; Elapsed = Math.Min(steps * s.dt, s.maxSeconds);
             if (!Angles.Finite(Heading) || !Angles.Finite(Position.x) || !Angles.Finite(Position.z))
                 throw new ArithmeticException("Non-finite simulation state.");
-            bool finalGoal = Definition.scenario != 2 || GoalSwitched;
+            bool finalGoal = !HasNextGoal;
             if (finalGoal && Elapsed < s.maxSeconds && Vec2.Distance(Position, Goal) <= s.arrivalRadius)
             { State = TrialState.Success; Events.Add(new TrialEvent(Elapsed, "success")); }
             else if (Elapsed + 1e-10 >= s.maxSeconds)

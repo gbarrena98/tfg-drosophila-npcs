@@ -79,8 +79,21 @@ namespace NpcLab.Runtime
 
         void Surface(Rect rect, Color fill, Color border, float radius = 8)
         {
+            float pixelScale = Mathf.Min(Screen.width / 1440f, Screen.height / 900f);
+            float stroke = Mathf.Max(2f, 1.8f / pixelScale);
             Rounded(rect, border, radius);
-            Rounded(new Rect(rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2), fill, Mathf.Max(0, radius - 1));
+            Rounded(new Rect(rect.x+stroke, rect.y+stroke, rect.width-2*stroke, rect.height-2*stroke),
+                fill, Mathf.Max(0, radius-stroke));
+            // Draw the straight runs last so fractional UI scaling cannot erase the lower rim.
+            FrameEdges(rect, border, radius, stroke);
+        }
+
+        void FrameEdges(Rect r, Color color, float inset, float stroke)
+        {
+            Box(new Rect(r.x+inset,r.y,r.width-2*inset,stroke),color);
+            Box(new Rect(r.x+inset,r.yMax-stroke,r.width-2*inset,stroke),color);
+            Box(new Rect(r.x,r.y+inset,stroke,r.height-2*inset),color);
+            Box(new Rect(r.xMax-stroke,r.y+inset,stroke,r.height-2*inset),color);
         }
 
         void Text(string value, float x, float y, float width, float height, GUIStyle style = null) =>
@@ -121,52 +134,45 @@ namespace NpcLab.Runtime
             Text("PEC3   /   " + LabApp.AppVersion, 1194, 32, 222, 29, caption);
         }
 
-        void Specimen()
+        void ArenaPreview()
         {
-            Rect plate = new Rect(783, 112, 592, 493);
-            Surface(plate, new Color32(19, 42, 45, 255), edge, 12);
-            Color line = new Color32(38, 65, 66, 255);
-            for (int col = 0; col < 11; col++)
-                Box(new Rect(811 + 52 * col, 136, 1, 391), line);
-            for (int row = 0; row < 8; row++)
-                Box(new Rect(802, 147 + 52 * row, 553, 1), line);
-            for (int i = 0; i < 2; i++)
-            {
-                float radius = 126 + i * 58;
-                GUI.DrawTexture(new Rect(1081 - radius, 319 - radius, radius * 2, radius * 2), Texture2D.whiteTexture,
-                    ScaleMode.StretchToFill, true, 0, new Color32(59, 89, 87, 255), 1, radius);
-            }
-            if (fly != null)
-            {
-                Matrix4x4 old = GUI.matrix;
-                GUI.matrix = old * Matrix4x4.TRS(new Vector3(1080, 324, 0), Quaternion.Euler(0, 0, 22), Vector3.one);
-                GUI.DrawTexture(new Rect(-196, -211, 392, 422), fly, ScaleMode.ScaleToFit, true);
-                GUI.matrix = old;
-            }
-            Box(new Rect(808, 538, 540, 1), edge);
-            Text("Drosophila melanogaster", 812, 551, 369, 44, heading);
-            Text("Vista dorsal", 1217, 561, 138, 24, caption);
+            var frame=new Rect(783,112,592,493);
+            var border=new Color32(83,117,119,255);
+            // The centre is the live Unity camera. Only its title bar, caption and frame cover it.
+            Surface(new Rect(frame.x,frame.y,frame.width,53),panel,border,8);
+            Box(new Rect(785,151,588,12),panel);
+            FrameEdges(frame,border,2,2);
+            Text("Circuito B  /  Eslalon",804,124,405,38,heading);
+            Rounded(new Rect(1256,134,8,8),LabWorld.Cyan,4);
+            Text("En pista",1273,123,98,34,small);
+            Surface(new Rect(783,511,592,94),panel,border,8);
+            if (fly!=null) GUI.DrawTexture(new Rect(798,523,67,69),fly,ScaleMode.ScaleToFit,true);
+            Text("Agentes autónomos",876,521,437,37,heading);
+            Marker(new Vector2(887,574),ControllerKind.Proportional);
+            Text("Proporcional",903,561,155,28,small);
+            Marker(new Vector2(1074,574),ControllerKind.Pfl3);
+            Text("PFL3",1092,561,105,28,small);
         }
 
         void DrawTitle()
         {
-            Box(new Rect(0, 0, 1440, 900), background);
-            Header("Control de orientación de NPC");
-            Text("Navegación", 63, 142, 694, 97, headline);
-            Text("bioinspirada", 63, 221, 694, 99, headline);
-            Text("Elige hacia dónde miran los dos NPC al salir y observa cómo encuentra cada uno el camino hasta la meta.",
-                68, 344, 625, 76, body);
-            if (Button("Primer ensayo", 67, 438, 290, 65, true)) app.EnterGuide();
-            if (Button("Configuración libre", 374, 438, 280, 65)) app.ChangeScreen(LabScreen.Setup);
-            Specimen();
-            Box(new Rect(65, 637, 1310, 1), edge);
-            Text("Explorar la arena", 66, 650, 640, 49, heading);
-            if (Button("Instrucciones", 986, 649, 163, 38)) app.ChangeScreen(LabScreen.Instructions);
-            if (Button("Créditos y fuentes", 1164, 649, 211, 38)) app.ChangeScreen(LabScreen.Credits);
-            if (Card("B · Obstáculos", "Compara cómo rodean tres obstáculos fijos para alcanzar una misma meta.",
-                    66, 710, 639, 137, false)) app.EnterGuide(ScenarioKind.Obstacles);
-            if (Card("C · Cambio de meta", "Observa cómo se reorientan cuando el objetivo cambia a los 10 s.",
-                    726, 710, 648, 137, false)) app.EnterGuide(ScenarioKind.MovingGoal);
+            Header("Arena de navegación de NPC");
+            Text("Arena de",63,142,694,97,headline);
+            Text("navegación",63,220,694,100,headline);
+            Text("Dos NPC compiten por la misma meta. Elige su rumbo, pronostica la llegada o construye un circuito para ponerlos a prueba.",
+                68,337,641,90);
+            if (Button("Primer ensayo",67,438,290,65,true)) app.EnterGuide();
+            if (Button("Taller de obstáculos",374,438,297,65)) app.EnterWorkshop();
+            if (Button("Configuración libre",67,528,290,48)) app.ChangeScreen(LabScreen.Setup);
+            ArenaPreview();
+            Box(new Rect(65,637,1310,2),edge);
+            Text("Selección de circuito",66,649,640,49,heading);
+            if (Button("Instrucciones",986,649,163,38)) app.ChangeScreen(LabScreen.Instructions);
+            if (Button("Créditos y fuentes",1164,649,211,38)) app.ChangeScreen(LabScreen.Credits);
+            if (Card("B · Eslalon de obstáculos","Seis barreras y dos trazadas posibles. Sigue a cada NPC hasta la bandera.",
+                    66,710,639,137,false)) app.EnterGuide(ScenarioKind.Obstacles);
+            if (Card("C · Relevo de balizas","Tres metas sucesivas. Observa quién recupera el rumbo después de cada cambio.",
+                    726,710,648,137,false)) app.EnterGuide(ScenarioKind.MovingGoal);
         }
     }
 }

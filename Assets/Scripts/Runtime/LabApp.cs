@@ -7,12 +7,15 @@ using UnityEngine;
 
 namespace NpcLab.Runtime
 {
-    public enum LabScreen { Title, Setup, Running, Paused, Results, Instructions, Credits, GuideSetup }
+    public enum LabScreen { Title, Setup, Running, Paused, Results, Instructions, Credits, GuideSetup, Workshop }
+    public enum GuideVariant { Pilot, Challenge, Workshop }
 
     public sealed class LabApp : MonoBehaviour
     {
-        public const string AppVersion = "0.3.0-alpha.2";
+        public const string AppVersion = "0.3.0-alpha.3";
         public static readonly Rect GuideArena = new Rect(340, 112, 712, 612);
+        public static readonly Rect WorkshopArena = new Rect(344, 139, 728, 652);
+        public static readonly Rect MenuArena = new Rect(790, 163, 578, 348);
         public static readonly string[] ScenarioNames = { "A · Espacio abierto", "B · Obstáculos fijos", "C · Cambio de meta" };
         public static readonly string[] ControllerNames = { "Proporcional", "PFL3", "Comparación" };
 
@@ -21,6 +24,10 @@ namespace NpcLab.Runtime
         public LabWorld World { get; private set; }
         public TrialDefinition Selected => IsGuided ? guideSelection : freeSelection;
         public bool IsGuided { get; private set; }
+        public GuideVariant Variant { get; private set; }
+        public ArenaWorkshop Workshop { get; private set; }
+        public double PeakSeparation { get; private set; }
+        public int? Prediction { get; set; }
         public double GuideHeading { get; private set; }
         public TrialEngine[] PreviousGuideTrial { get; private set; }
         public int PlaybackSpeed => IsGuided ? guideSpeed : VisualSpeed;
@@ -34,6 +41,8 @@ namespace NpcLab.Runtime
         TrialDefinition freeSelection, guideSelection;
         int guideSpeed = 1;
         LabUI ui;
+        readonly List<TrialEngine> demo = new List<TrialEngine>();
+        double demoTime;
 
         void Awake()
         {
@@ -42,8 +51,10 @@ namespace NpcLab.Runtime
             Time.timeScale = 1;
             World = new LabWorld();
             ui = new LabUI(this);
+            Workshop = new ArenaWorkshop(Application.persistentDataPath);
             ScreenState = LabScreen.Title;
             LoadSelection();
+            StartDemo();
         }
 
         static TrialDefinition ReadConfiguration(string id)
@@ -66,9 +77,12 @@ namespace NpcLab.Runtime
             Preview();
         }
 
-        public void EnterGuide(ScenarioKind scenario = ScenarioKind.Open)
+        public void EnterGuide(ScenarioKind scenario = ScenarioKind.Open, GuideVariant variant = GuideVariant.Challenge)
         {
-            guideSelection = ReadConfiguration(((char)('A' + (int)scenario)).ToString() + "-00");
+            Variant = scenario == ScenarioKind.Open ? GuideVariant.Pilot : variant;
+            if (Variant == GuideVariant.Workshop) guideSelection = Workshop.Snapshot();
+            else if (Variant == GuideVariant.Challenge) guideSelection = ArenaCourses.Challenge(scenario);
+            else guideSelection = ReadConfiguration(((char)('A' + (int)scenario)).ToString() + "-00");
             IsGuided = true;
             GuideHeading = guideSelection.initialHeading;
             guideSpeed = 1;
@@ -81,6 +95,7 @@ namespace NpcLab.Runtime
 
         public void PrepareGuide()
         {
+            Prediction = null;
             World.OnlyController = null;
             ScreenState = LabScreen.GuideSetup;
             Time.timeScale = 1;
@@ -98,6 +113,50 @@ namespace NpcLab.Runtime
             World.Rebuild(Selected, Kinds());
             World.SetTopView(IsGuided || TopView);
             if (IsGuided) World.SetStartingHeading(Selected.start, GuideHeading);
+        }
+
+        public void EnterWorkshop()
+        {
+            ChangeScreen(LabScreen.Workshop);
+            ui.ResetWorkshopTools();
+            RefreshWorkshop();
+        }
+
+        public void RefreshWorkshop()
+        {
+            World.Rebuild(Workshop.Draft, new[] {ControllerKind.Proportional, ControllerKind.Pfl3});
+            World.SetTopView(true);
+        }
+
+        public void PlayWorkshop()
+        {
+            EnterGuide(ScenarioKind.Obstacles, GuideVariant.Workshop);
+            StartTrial();
+        }
+
+        void StartDemo()
+        {
+            var d=ArenaCourses.Challenge(ScenarioKind.Obstacles);
+            var kinds=new[] { ControllerKind.Proportional, ControllerKind.Pfl3 };
+            demo.Clear();
+            World.Rebuild(d,kinds);
+            World.SetTopView(false);
+            foreach(var kind in kinds) { var e=new TrialEngine(d,kind,false); e.Start(); demo.Add(e); }
+            demoTime=0;
+        }
+
+        void AnimateMenu()
+        {
+            demoTime += Math.Min(Time.unscaledDeltaTime,.12f)*1.3;
+            if (demo[0].Finished && demo[1].Finished)
+            {
+                if (demoTime > Math.Max(demo[0].Elapsed,demo[1].Elapsed)+2.2) StartDemo();
+                return;
+            }
+            while (Math.Max(demo[0].Elapsed,demo[1].Elapsed)<demoTime && (!demo[0].Finished || !demo[1].Finished))
+                foreach(var e in demo) e.Step();
+            World.ShowTrails=true; World.ShowReference=false;
+            World.Update(demo);
         }
 
         List<ControllerKind> Kinds()
@@ -123,7 +182,7 @@ namespace NpcLab.Runtime
                 {
                     definition.initialHeading = heading;
                     definition.configurationId += "-custom";
-                    definition.datasetRole = "development-custom";
+                    if (!IsGuided || Variant==GuideVariant.Pilot) definition.datasetRole = "development-custom";
                 }
                 definition.Validate();
                 List<ControllerKind> kinds = Kinds();
@@ -139,6 +198,7 @@ namespace NpcLab.Runtime
                     PreviousGuideTrial = Engines.ToArray();
                 Engines.Clear();
                 Engines.AddRange(next);
+                PeakSeparation=0;
                 ResultsSaved = false;
                 ExportFolder = Notice = "";
                 Time.timeScale = PlaybackSpeed;
@@ -160,6 +220,7 @@ namespace NpcLab.Runtime
                 engine.Step();
                 if (!engine.Finished) finished = false;
             }
+            if (Engines.Count==2) PeakSeparation=Math.Max(PeakSeparation,Vec2.Distance(Engines[0].Position,Engines[1].Position));
             if (finished) FinishTrial();
         }
 
@@ -169,11 +230,13 @@ namespace NpcLab.Runtime
             float scale = Mathf.Min(Screen.width / 1440f, Screen.height / 900f);
             float offsetX = (Screen.width - 1440 * scale) / 2;
             float offsetY = (Screen.height - 900 * scale) / 2;
-            Rect arena = IsGuided ? GuideArena : new Rect(320, 100, 1100, 610);
+            bool menu = ScreenState == LabScreen.Title, editing = ScreenState == LabScreen.Workshop;
+            Rect arena = menu ? MenuArena : editing ? WorkshopArena : IsGuided ? GuideArena : new Rect(320, 100, 1100, 610);
             World.Camera.rect = new Rect((offsetX + arena.x * scale) / Screen.width,
                 (offsetY + (900 - arena.yMax) * scale) / Screen.height,
                 arena.width * scale / Screen.width, arena.height * scale / Screen.height);
-            World.Camera.orthographicSize = IsGuided ? 10.65f : 13.4f;
+            World.Camera.orthographicSize = menu ? 10.6f : editing || IsGuided ? 10.65f : 13.4f;
+            if (menu) { AnimateMenu(); return; }
             World.ShowTrails = IsGuided || Trajectories;
             World.ShowReference = !IsGuided && ReferenceArrows;
             if (Engines.Count > 0 && (ScreenState == LabScreen.Running || ScreenState == LabScreen.Paused || ScreenState == LabScreen.Results))
@@ -210,6 +273,7 @@ namespace NpcLab.Runtime
             Time.timeScale = 1;
             Notice = "";
             if (screen == LabScreen.Setup) Preview();
+            if (screen == LabScreen.Title) StartDemo();
         }
 
         public void AbortToResults()
@@ -235,7 +299,8 @@ namespace NpcLab.Runtime
                         DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture) + "_" + Guid.NewGuid().ToString("N").Substring(0, 6));
                 string environment = "App " + AppVersion + "; Unity " + Application.unityVersion + "; "
                     + (Application.isEditor ? "Editor" : "Player") + "; " + SystemInfo.operatingSystem + "; "
-                    + SystemInfo.processorType + "; visual speed " + PlaybackSpeed + "; mode " + (IsGuided ? "guided" : "free");
+                    + SystemInfo.processorType + "; visual speed " + PlaybackSpeed + "; mode "
+                    + (IsGuided && Variant==GuideVariant.Workshop ? "workshop" : IsGuided ? "guided" : "free");
                 TrialExport.Write(ExportFolder, Engines, environment);
                 ResultsSaved = true;
                 Notice = "Resultados guardados.";

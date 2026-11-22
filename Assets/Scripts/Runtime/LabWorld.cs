@@ -15,7 +15,9 @@ namespace NpcLab.Runtime
         readonly Dictionary<ControllerKind, List<Vector3>> points = new Dictionary<ControllerKind, List<Vector3>>();
         readonly Dictionary<Color, Material> materials = new Dictionary<Color, Material>();
         Transform target;
-        Transform arrivalRing, inactiveGoal;
+        Transform arrivalRing, goalBeacon;
+        Transform[] pendingGoals = new Transform[0];
+        readonly List<Mesh> obstacleMeshes = new List<Mesh>();
         public ControllerKind? OnlyController { get; set; }
         public bool Shows(ControllerKind kind) => !OnlyController.HasValue || OnlyController.Value == kind;
         LineRenderer startingArrow;
@@ -68,6 +70,7 @@ namespace NpcLab.Runtime
             for (int i = root.transform.childCount - 1; i >= 0; --i)
             { Transform t = root.transform.GetChild(i); if (t.gameObject != Camera.gameObject && t.gameObject != backgroundCamera.gameObject) { t.gameObject.SetActive(false); Object.Destroy(t.gameObject); } }
             foreach (Material m in materials.Values) Object.Destroy(m); materials.Clear();
+            foreach (Mesh mesh in obstacleMeshes) Object.Destroy(mesh); obstacleMeshes.Clear();
             bodies.Clear(); trails.Clear(); arrows.Clear(); points.Clear();
             startingArrow = null;
             float half = (float)definition.settings.arenaSize / 2;
@@ -86,15 +89,32 @@ namespace NpcLab.Runtime
                 new Vector3(half,.025f,half), new Vector3(-half,.025f,half), new Vector3(-half,.025f,-half) });
             foreach (CircleObstacle o in definition.obstacles)
             {
-                Primitive(PrimitiveType.Cylinder,"Obstacle "+o.id,At(o.center,.5f),new Vector3((float)o.radius*2, .5f, (float)o.radius*2),new Color32(100, 120, 128, 255),root.transform);
-                Ring("Obstacle rim",o.center,(float)o.radius,new Color32(188, 199, 195, 255)).localPosition = At(o.center,1.01f);
-                Ring("Obstacle clearance",o.center,(float)(o.radius+definition.settings.agentRadius+definition.settings.clearance),new Color(.38f,.46f,.50f));
+                if (o.shape == ObstacleShape.Disc)
+                {
+                    Primitive(PrimitiveType.Cylinder,"Barrera "+o.id,At(o.center,.39f),new Vector3((float)o.radius*2,.39f,(float)o.radius*2),new Color32(83,111,122,255),root.transform);
+                    Ring("Borde de barrera",o.center,(float)o.radius,new Color32(174,200,191,255)).position=At(o.center,.79f);
+                    Ring("Franja superior",o.center,(float)o.radius*.77f,new Color32(130,160,162,255)).position=At(o.center,.80f);
+                }
+                else PolygonBarrier(o);
             }
+            for (int i=0;i<6;i++) for(int j=0;j<2;j++)
+                Primitive(PrimitiveType.Cube,"Parrilla",At(definition.start+new Vec2((i-2.5)*.28,(j-1.5)*.28),.027f),
+                    new Vector3(.27f,.025f,.27f),(i+j)%2==0 ? new Color32(153,176,174,255) : new Color32(51,69,76,255),root.transform);
             Ring("Start",definition.start,.55f,new Color(.35f,.48f,.51f));
-            inactiveGoal = definition.scenario == (int)ScenarioKind.MovingGoal
-                ? Ring("Inactive goal", definition.secondGoal, .55f, new Color32(139, 155, 133, 255)) : null;
+            int goalCount = definition.scenario != 2 ? 0 : definition.HasThirdGoal ? 3 : 2;
+            pendingGoals = new Transform[goalCount];
+            for(int i=0;i<goalCount;++i)
+            {
+                pendingGoals[i]=Ring("Baliza "+(i+1),definition.GoalAt(i),.55f,new Color32(131,154,146,255));
+                pendingGoals[i].gameObject.SetActive(i!=0);
+            }
             target = Primitive(PrimitiveType.Cylinder,"Target",At(definition.goal,.13f),new Vector3(.38f,.13f,.38f),new Color(.58f,.92f,.56f),root.transform).transform;
             arrivalRing=Ring("Arrival radius",definition.goal,(float)definition.settings.arrivalRadius,new Color(.58f,.92f,.56f));
+            goalBeacon=new GameObject("Bandera de meta").transform;
+            goalBeacon.SetParent(root.transform,false);
+            goalBeacon.position=At(definition.goal);
+            Primitive(PrimitiveType.Cube,"Mástil",Vector3.zero,new Vector3(.065f,1.05f,.065f),new Color32(201,232,196,255),goalBeacon).transform.localPosition=new Vector3(.23f,.55f,0);
+            Primitive(PrimitiveType.Cube,"Bandera",Vector3.zero,new Vector3(.48f,.28f,.06f),new Color32(148,241,128,255),goalBeacon).transform.localPosition=new Vector3(.45f,.94f,0);
             foreach (ControllerKind kind in kinds)
             {
                 Color color = kind == ControllerKind.Pfl3 ? Cyan : Amber;
@@ -108,6 +128,32 @@ namespace NpcLab.Runtime
                 arrows[kind]=Line(kind+" reference",new Color(color.r*.65f,color.g*.65f,color.b*.65f),.035f,root.transform);
                 points[kind]=new List<Vector3>();
             }
+        }
+        void PolygonBarrier(CircleObstacle obstacle)
+        {
+            int n=obstacle.vertices.Length;
+            var vertices=new List<Vector3>();
+            var indices=new List<int>(ObstacleGeometry.Triangles(obstacle.vertices));
+            var rim=Line("Perfil de la barrera",new Color32(236,183,109,255),.075f,root.transform);
+            rim.positionCount=n+1;
+            for(int i=0;i<n;++i)
+            {
+                Vector3 top=At(ObstacleGeometry.WorldVertex(obstacle,i),.78f);
+                vertices.Add(top); rim.SetPosition(i,top+Vector3.up*.02f);
+            }
+            rim.SetPosition(n,vertices[0]+Vector3.up*.02f);
+            for(int i=0;i<n;++i)
+            {
+                Vector3 a=vertices[i], b=vertices[(i+1)%n];
+                int j=vertices.Count;
+                vertices.Add(a); vertices.Add(b); vertices.Add(new Vector3(a.x,0,a.z)); vertices.Add(new Vector3(b.x,0,b.z));
+                indices.AddRange(new[] {j,j+1,j+2,j+1,j+3,j+2,j+2,j+1,j,j+2,j+3,j+1});
+            }
+            var mesh=new Mesh {name="Barrera "+obstacle.id};
+            mesh.SetVertices(vertices); mesh.SetTriangles(indices,0); mesh.RecalculateNormals(); mesh.RecalculateBounds(); obstacleMeshes.Add(mesh);
+            var go=new GameObject(mesh.name); go.transform.SetParent(root.transform,false);
+            go.AddComponent<MeshFilter>().sharedMesh=mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial=Material(new Color32(132,107,83,255));
         }
         void BuildFly(Transform parent, Color color)
         {
@@ -155,8 +201,9 @@ namespace NpcLab.Runtime
             TrialEngine first = engines[0];
             target.position = At(first.Goal,.13f);
             arrivalRing.position = At(first.Goal,.035f);
-            if (inactiveGoal != null)
-                inactiveGoal.position = At(first.GoalSwitched ? first.Definition.goal : first.Definition.secondGoal,.035f);
+            goalBeacon.position=At(first.Goal);
+            for(int i=0;i<pendingGoals.Length;++i)
+                if (pendingGoals[i].gameObject.activeSelf!=(i!=first.GoalStage)) pendingGoals[i].gameObject.SetActive(i!=first.GoalStage);
         }
         public void SetStartingHeading(Vec2 start, double heading)
         {
@@ -181,6 +228,7 @@ namespace NpcLab.Runtime
         public void Dispose()
         {
             foreach (Material material in materials.Values) Object.Destroy(material);
+            foreach (Mesh mesh in obstacleMeshes) Object.Destroy(mesh);
             if (root != null) Object.Destroy(root);
         }
 

@@ -16,13 +16,14 @@ namespace NpcLab.Runtime
             engine.ArrivalSeconds.HasValue ? F(engine.ArrivalSeconds.Value) + " s" : State(engine.State);
 
         static bool WaitingAtGoal(TrialEngine engine) =>
-            !engine.GoalSwitched && Vec2.Distance(engine.Position, engine.Definition.goal) <= engine.Definition.settings.arrivalRadius;
+            engine.HasNextGoal && Vec2.Distance(engine.Position, engine.Goal) <= engine.Definition.settings.arrivalRadius;
 
         static string GoalProgress(TrialEngine engine)
         {
-            if (engine.GoalSwitched) return "Meta 2 activa desde " + F(engine.Definition.goalChangeSeconds, "0.#") + " s";
-            if (WaitingAtGoal(engine)) return "En la meta 1 · esperando el cambio";
-            return "Meta 1 activa · cambio a los " + F(engine.Definition.goalChangeSeconds, "0.#") + " s";
+            string label="Baliza "+(engine.GoalStage+1);
+            if (!engine.HasNextGoal) return label+" · objetivo final";
+            if (WaitingAtGoal(engine)) return label+" · esperando el relevo";
+            return label+" · cambio a los "+F(engine.NextChangeSeconds,"0.#")+" s";
         }
 
         void DrawGuide()
@@ -46,13 +47,18 @@ namespace NpcLab.Runtime
             Surface(new Rect(340, 743, 1076, 135), panel, edge);
             if (preparing)
             {
-                Text("Antes de salir", 362, 761, 335, 41, heading);
-                string help = "La flecha blanca indica el rumbo de salida. Los dos NPC reciben la dirección de la meta desde el primer instante.";
+                Text("Antes de salir", 362, 758, 404, 37, heading);
+                string help = "La flecha blanca marca el rumbo que comparten al salir.";
                 if (Scenario == ScenarioKind.Obstacles)
-                    help = "Los discos numerados son obstáculos. Fíjate en el punto en que cada trayectoria se desvía de la línea hacia la meta.";
+                    help = "Los números identifican las barreras. Sigue las dos trazadas hasta la bandera.";
                 else if (Scenario == ScenarioKind.MovingGoal)
-                    help = "El círculo verde identifica la meta activa. Si llegan pronto a la primera, esperan allí hasta que se active la segunda.";
-                Text(help, 363, 809, 1008, 56);
+                    help = "La bandera verde marca la baliza activa. Solo la última llegada cierra la carrera.";
+                Text(help, 363, 805, 408, 64,small);
+                Text("Tu pronóstico  ·  empate hasta 0,10 s",809,762,578,35,small);
+                string[] options={"Proporcional","PFL3","Empate"};
+                for(int i=0;i<3;++i)
+                    if(Button(options[i],809+i*190,806,180,46,app.Prediction==i))
+                        app.Prediction=app.Prediction==i ? (int?)null : i;
             }
             else DrawGuideTimes();
         }
@@ -61,8 +67,15 @@ namespace NpcLab.Runtime
         {
             Text("Rumbo de salida", 45, 127, 268, 43, heading);
             Text(app.Engines.Count > 0 ? "Cambia el rumbo y compara con el intento anterior." :
-                "Elige hacia dónde miran los dos NPC al empezar.", 46, 184, 252, 98);
-            HeadingChoice("De lado", Angles.Wrap(Bearing - 90), 334);
+                "Elige hacia dónde miran los dos NPC al empezar.", 46, 184, 252, 85);
+            if (Scenario!=ScenarioKind.Open && app.Variant!=GuideVariant.Workshop)
+            {
+                bool advanced=app.Variant==GuideVariant.Challenge;
+                if (Button("Reto",45,272,123,40,advanced) && !advanced) { app.EnterGuide(Scenario); return; }
+                if (Button("Piloto",177,272,125,40,!advanced) && advanced) { app.EnterGuide(Scenario,GuideVariant.Pilot); return; }
+            }
+            double side=app.Variant==GuideVariant.Challenge && Scenario==ScenarioKind.Obstacles ? 90 : -90;
+            HeadingChoice("De lado", Angles.Wrap(Bearing + side), 334);
             HeadingChoice("Hacia la meta", Bearing, 403);
             HeadingChoice("De espaldas", Angles.Wrap(Bearing - 180), 472);
             if (Scenario == ScenarioKind.Open) HeadingChoice("Casi de espaldas", Angles.Wrap(Bearing - 179), 541);
@@ -92,13 +105,17 @@ namespace NpcLab.Runtime
             Text(F(time, "0.0") + " / " + F(app.Selected.settings.maxSeconds, "0") + " s", 46, 363, 250, 43, heading);
             if (results)
             {
-                string hint = Scenario == ScenarioKind.Open && Opposite && app.Engines[1].State == TrialState.Timeout
+                string hint = app.Prediction.HasValue ? Verdict() : Scenario == ScenarioKind.Open && Opposite && app.Engines[1].State == TrialState.Timeout
                     ? "Prueba «Casi de espaldas» para ver qué cambia con un solo grado."
-                    : "Puedes comparar con otro rumbo o repetir las mismas condiciones.";
+                    : Verdict();
                 Text(hint, 46, 432, 252, 88);
                 if (Button("Cambiar rumbo y repetir", 45, 531, 257, 52, true)) app.PrepareGuide();
                 if (Button("Repetir el mismo rumbo", 45, 595, 257, 44)) app.StartTrial();
-                if (Button("Configuración libre", 45, 652, 257, 44)) app.ChangeScreen(LabScreen.Setup);
+                if (Button(app.Variant==GuideVariant.Workshop ? "Volver al taller" : "Configuración libre", 45, 652, 257, 44))
+                {
+                    if(app.Variant==GuideVariant.Workshop) app.EnterWorkshop();
+                    else app.ChangeScreen(LabScreen.Setup);
+                }
                 if (Button(app.ResultsSaved ? "Abrir carpeta CSV" : "Reintentar guardado", 45, 709, 257, 44))
                 {
                     if (app.ResultsSaved) app.OpenResults();
@@ -120,6 +137,25 @@ namespace NpcLab.Runtime
             }
         }
 
+        string Verdict()
+        {
+            var a=app.Engines[0]; var b=app.Engines[1];
+            if (a.State==TrialState.Aborted || b.State==TrialState.Aborted) return "Carrera interrumpida. Puedes repetirla con el mismo trazado.";
+            if (!a.ArrivalSeconds.HasValue && !b.ArrivalSeconds.HasValue) return "Ningún NPC alcanzó la meta antes del límite.";
+            int winner;
+            string result;
+            if (a.ArrivalSeconds.HasValue && b.ArrivalSeconds.HasValue)
+            {
+                double gap=Math.Abs(a.Elapsed-b.Elapsed);
+                winner=gap<=.1000001 ? 2 : a.Elapsed<b.Elapsed ? 0 : 1;
+                result=winner==2 ? "Empate técnico. Diferencia de "+F(gap)+" s." :
+                    (winner==0 ? "Proporcional" : "PFL3")+" cruzó "+F(gap)+" s antes.";
+            }
+            else { winner=a.ArrivalSeconds.HasValue ? 0 : 1; result="Solo "+(winner==0 ? "Proporcional" : "PFL3")+" llegó a la meta."; }
+            if (!app.Prediction.HasValue) return result;
+            return (app.Prediction==winner ? "¡Has acertado! " : "Pronóstico fallado. ")+result;
+        }
+
         void DrawObservations(bool preparing)
         {
             Text("Qué observar", 1090, 124, 302, 45, heading);
@@ -127,10 +163,12 @@ namespace NpcLab.Runtime
             switch (Scenario)
             {
                 case ScenarioKind.Obstacles:
-                    help = "Al detectar un obstáculo en su camino, cada NPC calcula un desvío local. Ambos usan la misma regla para rodearlo.";
+                    help = app.Variant==GuideVariant.Challenge ? "Sigue la bifurcación entre las barreras centrales. Dos tiempos parecidos pueden corresponder a trazadas distintas." :
+                        "Cada NPC rodea las piezas con la misma regla de evitación. Puedes aislar sus recorridos con los botones inferiores.";
                     break;
                 case ScenarioKind.MovingGoal:
-                    help = "Cuando la meta pasa del punto 1 al 2, observa cuándo vuelven a orientar el giro hacia el nuevo objetivo.";
+                    help = app.Selected.HasThirdGoal ? "A los 10 s la baliza aparece casi a su espalda. A los 16 s cambia otra vez, mientras los NPC están en movimiento." :
+                        "Cuando la meta pasa del punto 1 al 2, observa cuándo recuperan el rumbo hacia el nuevo objetivo.";
                     break;
                 default:
                     help = Opposite
@@ -180,15 +218,15 @@ namespace NpcLab.Runtime
                     Text(e.Kind == ControllerKind.Pfl3 ? "PFL3" : "Proporcional", 1117, 424+60*i, 132, 35, small);
                     Text(value, 1249, 424+60*i, 142, 41, body);
                 }
+                Text("Separación máx.  "+F(app.PeakSeparation,"0.00")+" m",1090,532,303,35,readout);
             }
             else
             {
                 TrialEngine e = app.Engines[0];
                 Text("Meta activa", 1090, 370, 300, 42, heading);
-                Text(e.GoalSwitched ? "02" : "01", 1089, 414, 128, 68, title);
-                Text(e.GoalSwitched ? "Segunda meta" : "Primera meta", 1192, 434, 197, 40);
-                string phase = e.GoalSwitched ? "Cambio a los " + F(e.Definition.goalChangeSeconds, "0.#") + " s"
-                    : "Cambio en " + F(Math.Max(0, e.Definition.goalChangeSeconds - e.Elapsed), "0.0") + " s";
+                Text("0"+(e.GoalStage+1), 1089, 414, 128, 68, title);
+                Text("de "+(e.Definition.HasThirdGoal ? "3" : "2")+" balizas", 1192, 434, 197, 40);
+                string phase = e.HasNextGoal ? "Cambio en "+F(Math.Max(0,e.NextChangeSeconds-e.Elapsed),"0.0")+" s" : "Baliza final";
                 Text(phase, 1090, 504, 302, 39, readout);
             }
             Box(new Rect(1090, 580, 300, 1), edge);
@@ -225,7 +263,7 @@ namespace NpcLab.Runtime
             Text("Controlador", 361, 753, 211, 26, small);
             Text("Llegada", 587, 753, 180, 26, small);
             Text("Recorrido", 779, 753, 152, 26, small);
-            string measure = Scenario == ScenarioKind.MovingGoal ? "Reorientación" : Scenario == ScenarioKind.Obstacles ? "Contactos" : "Dist. a meta";
+            string measure = Scenario == ScenarioKind.MovingGoal ? app.Selected.HasThirdGoal ? "Reorient. M2 / M3" : "Reorientación" : Scenario == ScenarioKind.Obstacles ? "Contactos" : "Dist. a meta";
             Text(measure, 945, 753, 206, 26, small);
             if (previous != null) Text("Antes (" + Degrees(previous[0].Definition.initialHeading) + ")", 1182, 753, 210, 26, small);
             Box(new Rect(360, 783, 1030, 1), edge);
@@ -236,13 +274,17 @@ namespace NpcLab.Runtime
                 Marker(new Vector2(370, y+13), e.Kind);
                 Text(e.Kind == ControllerKind.Proportional ? "Proporcional" : "PFL3", 390, y, 185, 31);
                 string arrival = Arrival(e);
-                if (Scenario == ScenarioKind.MovingGoal && !e.Finished && WaitingAtGoal(e)) arrival = "Espera en meta 1";
+                if (Scenario == ScenarioKind.MovingGoal && !e.Finished && WaitingAtGoal(e)) arrival = "Espera en meta "+(e.GoalStage+1);
                 Text(arrival, 587, y, 191, 34);
                 Text(F(e.RouteLength,"0.0")+" m",779,y,150,34,readout);
                 string value = F(Vec2.Distance(e.Position,e.Goal),"0.0") + " m";
                 if (Scenario == ScenarioKind.Obstacles) value = e.Collisions.ToString();
                 else if (Scenario == ScenarioKind.MovingGoal)
-                    value = e.ReorientationSeconds.HasValue ? F(e.ReorientationSeconds.Value) + " s" : "—";
+                {
+                    value = e.ReorientationSeconds.HasValue ? F(e.ReorientationSeconds.Value) : "—";
+                    if (app.Selected.HasThirdGoal) value+=" / "+(e.SecondReorientationSeconds.HasValue ? F(e.SecondReorientationSeconds.Value) : "—");
+                    value+=" s";
+                }
                 Text(value,945,y,203,34,readout);
                 if (previous != null) Text(Arrival(previous[i]),1182,y,207,34);
             }
@@ -262,9 +304,12 @@ namespace NpcLab.Runtime
             MapLabel("Salida", start + new Vector2(13, 9), 65);
             if (Scenario == ScenarioKind.MovingGoal)
             {
-                bool switched = !preparing && app.Engines[0].GoalSwitched;
-                MapLabel(switched ? "1 · Anterior" : "1 · Activa", MapPoint(d.goal)+new Vector2(14,-15), 107);
-                MapLabel(switched ? "2 · Activa" : "2 · Próxima", MapPoint(d.secondGoal)+new Vector2(14,-15), 114);
+                int stage=preparing ? 0 : app.Engines[0].GoalStage;
+                for(int i=0;i<(d.HasThirdGoal ? 3 : 2);++i)
+                {
+                    string state=i==stage ? "Activa" : i<stage ? "Anterior" : "Próxima";
+                    MapLabel((i+1)+" · "+state,MapPoint(d.GoalAt(i))+new Vector2(14,-15),110);
+                }
             }
             else MapLabel("Meta", MapPoint(d.goal) + new Vector2(13,-15), 57);
             foreach (CircleObstacle obstacle in d.obstacles)
