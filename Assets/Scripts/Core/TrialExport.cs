@@ -36,7 +36,10 @@ namespace NpcLab.Core
             b.Append(",\n  \"initialHeading\":").Append(Angles.Number(d.initialHeading));
             b.Append(",\n  \"goalChangeSeconds\":").Append(Angles.Number(d.goalChangeSeconds));
             if (d.HasThirdGoal)
+            {
                 b.Append(",\n  \"thirdGoal\":").Append(Vec(d.thirdGoal)).Append(",\n  \"secondChangeSeconds\":").Append(Angles.Number(d.secondChangeSeconds));
+                b.Append(",\n  \"relayRule\":\"all_participants_reached_after_minimum_time\"");
+            }
             b.Append(",\n  \"settings\":{");
             string[] names = { "dt","arenaSize","maxSeconds","maxSpeed","maxTurn","arrivalRadius","agentRadius",
                 "proportionalGain","pfl3Gain","tau","lookAhead","clearance","reorientDegrees","reorientDwell" };
@@ -112,8 +115,8 @@ namespace NpcLab.Core
                     w.WriteLine("controller,goal_number,switch_s,reorientation_s");
                     foreach (TrialEngine e in trials)
                     {
-                        if (e.GoalStage >= 1) w.WriteLine(Csv(e.Kind.ToString()) + ",2," + N(e.Definition.goalChangeSeconds) + "," + Nullable(e.ReorientationSeconds));
-                        if (e.GoalStage >= 2) w.WriteLine(Csv(e.Kind.ToString()) + ",3," + N(e.Definition.secondChangeSeconds) + "," + Nullable(e.SecondReorientationSeconds));
+                        if (e.GoalStage >= 1) w.WriteLine(Csv(e.Kind.ToString()) + ",2," + Nullable(e.ActivationSeconds(1)) + "," + Nullable(e.ReorientationSeconds));
+                        if (e.GoalStage >= 2) w.WriteLine(Csv(e.Kind.ToString()) + ",3," + Nullable(e.ActivationSeconds(2)) + "," + Nullable(e.SecondReorientationSeconds));
                     }
                 }
             }

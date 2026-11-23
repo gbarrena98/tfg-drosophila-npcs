@@ -53,14 +53,14 @@ namespace NpcLab.Runtime
             else last += delta;
             if (first < 1 || last <= first || last >= d.settings.maxSeconds)
             {
-                Message = "Cada relevo debe activarse después del anterior y antes de los 60 s.";
+                Message = "El mínimo de M2 debe ser anterior al de M3 y ambos deben quedar entre 1 y 59 s.";
                 return;
             }
             d.goalChangeSeconds = first;
             d.secondChangeSeconds = last;
             d.Validate();
             Draft = d;
-            Message = "Horario de las balizas actualizado.";
+            Message = "Tiempo mínimo de la baliza actualizado.";
         }
 
         public void Select(int index) { SelectedIndex = index; Message = ""; }

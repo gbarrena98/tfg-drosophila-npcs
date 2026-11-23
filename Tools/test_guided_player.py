@@ -234,6 +234,66 @@ def check_other_scenarios(window, used):
     return obstacles, changed_goal
 
 
+def verify_relay_session(folder, case, rows, evidence_name):
+    """Check visits from the positions at handoff and recalculate responses from actual switches."""
+    assert case['relayRule'] == 'all_participants_reached_after_minimum_time'
+    responses = {(r['controller'], int(r['goal_number'])): r for r in csv_rows(folder/'goal_responses.csv')}
+    assert len(responses) == 4
+    handoffs = []
+    evidence = {}
+    for kind, row in rows.items():
+        assert row['state'] == 'Success'
+        events = csv_rows(folder/f'events_{kind}.csv')
+        visits = [e for e in events if e['event'].startswith('beacon_')]
+        assert [e['event'] for e in visits] == ['beacon_1_reached', 'beacon_2_reached', 'beacon_3_reached']
+        reached = [float(e['time_s']) for e in visits]
+        switches = [float(e['time_s']) for e in events if e['event'].startswith('goal_switch')]
+        assert len(switches) == 2 and reached[0] <= switches[0] <= reached[1] <= switches[1] <= reached[2]
+        assert reached[2] == float(row['arrival_s'])
+        handoffs.append(switches)
+        trace = csv_rows(folder/f'trace_{kind}.csv')
+        radii = []
+        latency = []
+        for i, switch in enumerate(switches):
+            sample = next(s for s in trace if math.isclose(float(s['time_s']), switch, abs_tol=1e-8))
+            goal = case[('goal', 'secondGoal')[i]]
+            distance = math.hypot(float(sample['x_m'])-goal['x'], float(sample['z_m'])-goal['z'])
+            assert distance <= case['settings']['arrivalRadius']+1e-7, (kind, i, distance)
+            radii.append(distance)
+            response = responses[kind, i+2]
+            assert math.isclose(float(response['switch_s']), switch, abs_tol=1e-8)
+            end = switches[1] if i == 0 else reached[2]
+            since = None
+            expected = None
+            for sample in trace:
+                t = float(sample['time_s'])
+                if not switch <= t < end:
+                    continue
+                if sample['waiting_for_switch'] == 'true' or abs(float(sample['error_reference_deg'])) >= case['settings']['reorientDegrees']:
+                    since = None
+                    continue
+                if since is None:
+                    since = t
+                if t + float(sample['dt_s']) - since + 1e-9 >= case['settings']['reorientDwell']:
+                    expected = since - switch
+                    break
+            reported = float(response['reorientation_s']) if response['reorientation_s'] else None
+            assert (expected is None and reported is None) or (expected is not None and reported is not None and math.isclose(reported,expected,abs_tol=1e-8))
+            latency.append(reported)
+        for sample in trace:
+            t = float(sample['time_s'])
+            key = 'goal' if t < switches[0] else 'secondGoal' if t < switches[1] else 'thirdGoal'
+            goal = case[key]
+            assert (float(sample['goal_x_m']), float(sample['goal_z_m'])) == (goal['x'], goal['z'])
+        evidence[kind] = {'reached_s': reached, 'switch_s': switches, 'distance_at_switch_m': radii, 'reorientation_s': latency, 'route_m': float(row['route_m'])}
+    assert handoffs[0] == handoffs[1]
+    for i, field in enumerate(('goalChangeSeconds', 'secondChangeSeconds')):
+        earliest = max(case[field], *(proof['reached_s'][i] for proof in evidence.values()))
+        assert earliest-1e-8 <= handoffs[0][i] < earliest+case['settings']['dt']+1e-8
+    assert handoffs[0][1] > case['secondChangeSeconds'], 'This short schedule must wait for the last NPC at M2.'
+    (EVIDENCE / (evidence_name+'.json')).write_text(json.dumps({'case':case,'controllers':evidence},indent=2),encoding='utf-8')
+
+
 def check_challenges(w,used):
     w.click(148,747)  # Free results > home
     w.click(710,769)
@@ -254,14 +314,7 @@ def check_challenges(w,used):
     w.click(160,639)
     folder,case,c=wait_for(lambda:session_matches(used,0,'guided','C-RELEVO'),'Playable relay did not finish.')
     assert case['datasetRole']=='showcase-challenge' and case['secondChangeSeconds']==16
-    responses=csv_rows(folder/'goal_responses.csv')
-    assert len(responses)==4 and all(row['reorientation_s'] for row in responses)
-    for k,row in c.items():
-        assert row['state']=='Success'
-        ev=csv_rows(folder/f'events_{k}.csv')
-        assert [(v['event'],float(v['time_s'])) for v in ev if v['event'].startswith('goal_switch')]==[('goal_switch',10),('goal_switch_2',16)]
-        stage2=[s for s in csv_rows(folder/f'trace_{k}.csv') if 10<=float(s['time_s'])<16]
-        assert min(math.hypot(float(s['x_m'])-case['secondGoal']['x'],float(s['z_m'])-case['secondGoal']['z']) for s in stage2)>case['settings']['arrivalRadius']
+    verify_relay_session(folder,case,c,'relevo-estandar')
     wait_for(lambda:w.primary_visible(65,540),'Relay results were not drawn.')
     w.save('17-relevo-meta')
     return b,c
@@ -323,26 +376,20 @@ def check_goal_editor(w, used):
     w.click(1130,364)
     w.click(162,396)
     w.click(*at(5,5))
-    w.click(1130,364)
+    for _ in range(5):
+        w.click(1130,364)
     w.set_angle('-25,5',workshop=True)
     w.click(155,727)
     w.save('19-editor-metas')
     w.click(155,661)
     w.click(155,639)
     folder,d,rows=wait_for(lambda:session_matches(used,None,'workshop','C-TALLER-*'),'Custom relay did not finish.')
-    assert d['datasetRole']=='free-workshop' and d['goalChangeSeconds']==8 and d['secondChangeSeconds']==15 and d['initialHeading']==-25.5
+    assert d['datasetRole']=='free-workshop' and d['goalChangeSeconds']==8 and d['secondChangeSeconds']==11 and d['initialHeading']==-25.5
     for key,(x,z) in zip(('goal','secondGoal','thirdGoal'),[(-3,4),(-4,-4),(5,5)]):
         assert abs(d[key]['x']-x)<.2 and abs(d[key]['z']-z)<.2, (key,d[key])
     saved=json.loads((TRIALS.parent/'arena-c.json').read_bytes())
     assert all(saved[k]==d[k] for k in ('goal','secondGoal','thirdGoal','goalChangeSeconds','secondChangeSeconds'))
-    for kind,row in rows.items():
-        assert row['state']=='Success'
-        switches=[float(e['time_s']) for e in csv_rows(folder/f'events_{kind}.csv') if e['event'].startswith('goal_switch')]
-        assert switches==[8,15]
-        for s in csv_rows(folder/f'trace_{kind}.csv'):
-            t=float(s['time_s'])
-            goal=d['goal' if t<8 else 'secondGoal' if t<15 else 'thirdGoal']
-            assert (float(s['goal_x_m']),float(s['goal_z_m']))==(goal['x'],goal['z'])
+    verify_relay_session(folder,d,rows,'relevo-libre')
     wait_for(lambda:w.primary_visible(65,540),'Custom relay results were not drawn.')
     w.save('20-relevo-personalizado')
     w.click(160,674)

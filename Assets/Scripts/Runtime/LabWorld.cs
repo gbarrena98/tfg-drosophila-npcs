@@ -105,7 +105,7 @@ namespace NpcLab.Runtime
             pendingGoals = new Transform[goalCount];
             for(int i=0;i<goalCount;++i)
             {
-                pendingGoals[i]=Ring("Baliza "+(i+1),definition.GoalAt(i),.55f,new Color32(131,154,146,255));
+                pendingGoals[i]=Ring("Baliza "+(i+1),definition.GoalAt(i),(float)definition.settings.arrivalRadius,new Color32(131,154,146,255));
                 pendingGoals[i].gameObject.SetActive(i!=0);
             }
             target = Primitive(PrimitiveType.Cylinder,"Target",At(definition.goal,.13f),new Vector3(.38f,.13f,.38f),new Color(.58f,.92f,.56f),root.transform).transform;

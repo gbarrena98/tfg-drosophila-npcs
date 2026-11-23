@@ -131,7 +131,7 @@ namespace NpcLab.Runtime
             if (relay)
             {
                 for (int i=0;i<3;++i)
-                    if(Button("Baliza "+(i+1)+"     "+F(GoalTime(i),"0")+" s",45,270+53*i,258,44,i==selectedGoal))
+                    if(Button("Baliza "+(i+1)+"   "+GoalSchedule(i),45,270+53*i,258,44,i==selectedGoal))
                     { selectedGoal=i; Workshop.Message=""; }
             }
             else for(int i=0;i<ToolNames.Length;++i)
@@ -149,7 +149,7 @@ namespace NpcLab.Runtime
                     app.World.SetStartingHeading(Workshop.Draft.start,headingValue);
                 }
             }
-            Text(relay ? "Los cambios siguen el horario común de las tres balizas." :
+            Text(relay ? "Los dos NPC deben tocar la baliza antes del relevo." :
                 "Las piezas tienen el mismo contorno para ambos NPC.",45,568,252,56,small);
             if(Button("Probar con ambos",45,632,258,56,true))
             {
@@ -194,6 +194,7 @@ namespace NpcLab.Runtime
         }
 
         double GoalTime(int stage) => stage==0 ? 0 : stage==1 ? Workshop.Draft.goalChangeSeconds : Workshop.Draft.secondChangeSeconds;
+        string GoalSchedule(int stage) => stage==0 ? "0 s" : "desde "+F(GoalTime(stage),"0")+" s";
 
         void DrawGoalMap()
         {
@@ -221,7 +222,7 @@ namespace NpcLab.Runtime
                 Vector2 pt=EditPoint(dragging && i==selectedGoal ? ghost : Workshop.Draft.GoalAt(i));
                 if (i==selectedGoal) FrameEdges(new Rect(pt.x-15,pt.y-15,30,30),LabWorld.Cyan,0,2);
                 Vector2 label = new Vector2(Mathf.Clamp(pt.x+16,map.x,map.xMax-100),Mathf.Clamp(pt.y-17,map.y,map.yMax-27));
-                MapLabel("M"+(i+1)+"  ·  "+F(GoalTime(i),"0")+" s",label,100);
+                MapLabel("M"+(i+1)+"  ·  "+(i==0 ? "" : "≥ ")+F(GoalTime(i),"0")+" s",label,100);
             }
         }
 
@@ -234,14 +235,14 @@ namespace NpcLab.Runtime
             if(selectedGoal==0) Text("Esta baliza está activa desde la salida (0 s).",1105,310,275,85);
             else
             {
-                int change=Adjustment("Se activa en el segundo",F(GoalTime(selectedGoal),"0")+" s",310);
+                int change=Adjustment("Tiempo mínimo desde la salida",F(GoalTime(selectedGoal),"0")+" s",310);
                 if(change!=0) Workshop.ChangeTime(selectedGoal,change);
             }
             Box(new Rect(1105,442,287,2),edge);
             Text("Orden del relevo",1105,463,283,43,heading);
             for (int i=0;i<3;++i)
-                Text("M"+(i+1)+"     "+F(GoalTime(i),"0")+" s",1105,524+37*i,278,32,readout);
-            Text("M3 se activa aunque los NPC sigan de camino a M2. Retrasa M3 para darles más tiempo.",1105,661,278,99,small);
+                Text("M"+(i+1)+"     "+GoalSchedule(i),1105,524+37*i,278,32,readout);
+            Text("Si el tiempo mínimo ya ha pasado, la siguiente baliza se abre en cuanto llega el segundo NPC.",1105,661,278,99,small);
         }
 
         string WorkshopHint()

@@ -34,6 +34,40 @@ namespace NpcLab.Verification
         static void Close(double a, double b, double tol = 1e-8) { Require(Math.Abs(a - b) <= tol, Angles.Number(a) + " differs from " + Angles.Number(b)); }
         static TrialEngine Complete(TrialDefinition d, ControllerKind k)
         { TrialEngine e = new TrialEngine(d, k, false); e.Start(); while (!e.Finished) e.Step(); return e; }
+        static TrialEngine[] PlayRelay(TrialDefinition d, bool reverse = false)
+        {
+            var pair = new[] {new TrialEngine(d,ControllerKind.Proportional,false), new TrialEngine(d,ControllerKind.Pfl3,false)};
+            if (reverse) Array.Reverse(pair);
+            foreach (var e in pair) e.Start();
+            while (!TrialEngine.StepTogether(pair)) { }
+            return pair;
+        }
+
+        static void VerifyRelay(TrialEngine[] pair)
+        {
+            foreach (var e in pair)
+            {
+                Require(e.State == TrialState.Success && e.VisitedBeacons == 3 && e.AtGoal, "Final goal or earlier visit missing.");
+                for (int stage = 1; stage <= 2; stage++)
+                {
+                    double activation = e.ActivationSeconds(stage).Value;
+                    Close(activation,pair[0].ActivationSeconds(stage).Value);
+                    double minimum = stage == 1 ? e.Definition.goalChangeSeconds : e.Definition.secondChangeSeconds;
+                    double expected = minimum;
+                    foreach (var npc in pair)
+                    {
+                        var reached = npc.Events.Find(ev => ev.kind == "beacon_" + stage + "_reached");
+                        Require(reached != null, "Missing intermediate beacon visit.");
+                        expected = Math.Max(expected,reached.time);
+                    }
+                    Require(activation + 1e-9 >= expected && activation < expected + e.Definition.settings.dt + 1e-9,
+                        "The active goal did not wait for the final participant and the configured time.");
+                    var sample = e.Samples.Find(row => Math.Abs(row.time - activation) < 1e-9);
+                    Require(sample != null && Vec2.Distance(new Vec2(sample.x,sample.z),e.Definition.GoalAt(stage-1)) <= e.Definition.settings.arrivalRadius,
+                        "An NPC turned before touching the previous beacon.");
+                }
+            }
+        }
         static double Parse(string x) { return double.Parse(x, CultureInfo.InvariantCulture); }
 
         public static CheckReport Run(string root)
@@ -171,37 +205,55 @@ namespace NpcLab.Verification
                 var b=ArenaCourses.Challenge(ScenarioKind.Obstacles);
                 var c=ArenaCourses.Challenge(ScenarioKind.MovingGoal);
                 Require(b.datasetRole=="showcase-challenge" && b.obstacles.Length==6 && ArenaCourses.EmptyWorkshop().datasetRole=="free-workshop","Course identities were mixed.");
-                foreach(var kind in new[]{ControllerKind.Proportional,ControllerKind.Pfl3})
+                var pair = PlayRelay(c);
+                VerifyRelay(pair);
+                foreach (var relay in pair)
                 {
-                    var slalom=Complete(b,kind); var relay=Complete(c,kind);
-                    Require(slalom.State==TrialState.Success && relay.State==TrialState.Success,"Nominal circuit is incomplete.");
-                    Require(relay.GoalStage==2 && relay.ReorientationSeconds.HasValue && relay.SecondReorientationSeconds.HasValue,"Missing switch response.");
-                    int switches=0;
-                    foreach(var ev in relay.Events)
-                        if(ev.kind.StartsWith("goal_switch",StringComparison.Ordinal)) { Close(ev.time,switches==0 ? 10 : 16); switches++; }
-                    Require(switches==2 && relay.Elapsed>16,"Final arrival before the relay was complete.");
+                    var kind = relay.Kind;
+                    var slalom = Complete(b,kind);
+                    Require(slalom.State == TrialState.Success, "Nominal obstacle circuit is incomplete.");
+                    Require(relay.ReorientationSeconds.HasValue && relay.SecondReorientationSeconds.HasValue, "Missing switch response.");
+                    Require(relay.ActivationSeconds(2).Value > 16, "M3 opened while the agents were still travelling to M2.");
                     var pilotB=Complete(ScenarioFactory.Create(ScenarioKind.Obstacles,0),kind);
                     var pilotC=Complete(ScenarioFactory.Create(ScenarioKind.MovingGoal,0),kind);
                     Close(pilotB.Elapsed,kind==ControllerKind.Proportional ? 8.36 : 8.44);
                     Close(pilotC.Elapsed,kind==ControllerKind.Proportional ? 14.52 : 14.54);
                 }
             });
-            r.Add("edited_relay_switches_at_its_own_times", () => {
+            r.Add("edited_relay_respects_earliest_times_and_visits", () => {
                 var draft=ArenaCourses.RelayWorkshop();
                 draft.goal=new Vec2(-3,4); draft.secondGoal=new Vec2(-4,-4); draft.thirdGoal=new Vec2(5,5);
-                draft.goalChangeSeconds=8; draft.secondChangeSeconds=15; draft.Validate();
+                draft.goalChangeSeconds=8; draft.secondChangeSeconds=11; draft.initialHeading=-25.5; draft.Validate();
                 Require(draft.datasetRole=="free-workshop" && draft.configurationId=="C-TALLER","Missing workshop identity.");
-                foreach (var kind in new[]{ControllerKind.Proportional,ControllerKind.Pfl3})
+                var pair = PlayRelay(draft);
+                VerifyRelay(pair);
+                Require(pair[0].ActivationSeconds(2).Value > 11, "The short schedule skipped M2.");
+                draft.goalChangeSeconds=18; draft.secondChangeSeconds=38;
+                pair=PlayRelay(draft);
+                VerifyRelay(pair);
+                Close(pair[0].ActivationSeconds(1).Value,18); Close(pair[0].ActivationSeconds(2).Value,38);
+            });
+            r.Add("unreached_beacon_blocks_the_relay_at_timeout", () => {
+                var d = ArenaCourses.RelayWorkshop();
+                d.initialHeading = 180;
+                var pair = PlayRelay(d);
+                Require(pair[0].VisitedBeacons == 1 && pair[1].VisitedBeacons == 0, "The antipodal trial did not reproduce.");
+                foreach (var e in pair)
+                    Require(e.State == TrialState.Timeout && e.GoalStage == 0 && !e.ActivationSeconds(1).HasValue
+                        && !e.ReorientationSeconds.HasValue, "A missing visit was recorded as a completed relay.");
+            });
+            r.Add("relay_activation_is_independent_of_step_order", () => {
+                var d = ArenaCourses.Challenge(ScenarioKind.MovingGoal);
+                var forward = PlayRelay(d);
+                var reverse = PlayRelay(d,true);
+                for (int i=0;i<forward.Length;i++)
                 {
-                    var engine=Complete(draft,kind);
-                    Require(engine.State==TrialState.Success && engine.GoalStage==2,"Edited relay did not finish at the last beacon.");
-                    int count=0;
-                    foreach (var ev in engine.Events)
-                        if (ev.kind.StartsWith("goal_switch",StringComparison.Ordinal)) { Close(ev.time,count==0 ? 8 : 15); ++count; }
-                    Require(count==2,"Edited relay missed a switch.");
+                    var other = reverse[1-i];
+                    Close(forward[i].Elapsed,other.Elapsed);
+                    Close(forward[i].RouteLength,other.RouteLength);
+                    Close(forward[i].ActivationSeconds(1).Value,other.ActivationSeconds(1).Value);
+                    Close(forward[i].ActivationSeconds(2).Value,other.ActivationSeconds(2).Value);
                 }
-                var fixedCourse=ArenaCourses.Challenge(ScenarioKind.MovingGoal);
-                Close(fixedCourse.goal.z,6.5); Close(fixedCourse.goalChangeSeconds,10); Close(fixedCourse.secondChangeSeconds,16);
             });
             return r;
         }

@@ -96,7 +96,7 @@ namespace NpcLab.Core
 
     public sealed class TrialEngine
     {
-        public const string CoreVersion = "0.3.0-pec3";
+        public const string CoreVersion = "0.3.1-pec3";
         public readonly TrialDefinition Definition;
         public readonly ControllerKind Kind;
         public readonly List<TrialSample> Samples = new List<TrialSample>();
@@ -113,6 +113,11 @@ namespace NpcLab.Core
         public bool GoalSwitched => GoalStage > 0;
         public bool HasNextGoal => Definition.scenario == (int)ScenarioKind.MovingGoal && GoalStage < (Definition.HasThirdGoal ? 2 : 1);
         public double NextChangeSeconds => GoalStage == 0 ? Definition.goalChangeSeconds : Definition.secondChangeSeconds;
+        public bool AtGoal => Vec2.Distance(Position, Goal) <= Definition.settings.arrivalRadius;
+        public int VisitedBeacons { get; private set; }
+        readonly double?[] activatedAt = { 0, null, null };
+        public double? ActivationSeconds(int stage) => activatedAt[stage];
+        bool CanReleaseBeacon => !Definition.HasThirdGoal || (State == TrialState.Running && VisitedBeacons > GoalStage);
         public double? ReorientationSeconds { get; private set; }
         public double? SecondReorientationSeconds { get; private set; }
         public double? ArrivalSeconds { get { return State == TrialState.Success ? (double?)Elapsed : null; } }
@@ -149,6 +154,7 @@ namespace NpcLab.Core
         {
             if (State != TrialState.Ready) throw new InvalidOperationException("Trial already started.");
             State = TrialState.Running; Events.Add(new TrialEvent(Elapsed, "start"));
+            RecordBeaconVisit();
             if (Definition.scenario != 2 && Vec2.Distance(Position, Goal) <= Definition.settings.arrivalRadius)
             { State = TrialState.Success; Events.Add(new TrialEvent(0, "success")); }
         }
@@ -156,21 +162,47 @@ namespace NpcLab.Core
         public void Resume() { if (State == TrialState.Paused) { State = TrialState.Running; Events.Add(new TrialEvent(Elapsed, "resume")); } }
         public void Abort() { if (!Finished) { State = TrialState.Aborted; Events.Add(new TrialEvent(Elapsed, "abort")); } }
 
-        public void Step()
+        void RecordBeaconVisit()
+        {
+            if (!Definition.HasThirdGoal || VisitedBeacons != GoalStage || !AtGoal) return;
+            VisitedBeacons++;
+            Events.Add(new TrialEvent(Elapsed, "beacon_" + VisitedBeacons + "_reached"));
+        }
+
+        // Read all visits before moving either NPC so the relay changes on the same tick for both.
+        public static bool StepTogether(IList<TrialEngine> trials)
+        {
+            bool release = true;
+            for (int i = 0; i < trials.Count; i++)
+                if (!trials[i].CanReleaseBeacon) release = false;
+            bool finished = true;
+            for (int i = 0; i < trials.Count; i++)
+            {
+                trials[i].Step(release);
+                if (!trials[i].Finished) finished = false;
+            }
+            return finished;
+        }
+
+        public void Step() => Step(CanReleaseBeacon);
+
+        void Step(bool releaseBeacon)
         {
             if (State != TrialState.Running) return;
             SimSettings s = Definition.settings;
             double time = steps * s.dt;
             double dt = Math.Min(s.dt, s.maxSeconds - time);
             if (dt <= 1e-12) { State = TrialState.Timeout; return; }
-            if (HasNextGoal && time + 1e-10 >= NextChangeSeconds)
+            if (HasNextGoal && releaseBeacon && time + 1e-10 >= NextChangeSeconds)
             {
                 GoalStage++;
                 Goal = Definition.GoalAt(GoalStage);
                 inBandSince = double.NaN;
+                activatedAt[GoalStage] = time;
                 Events.Add(new TrialEvent(time, GoalStage == 1 ? "goal_switch" : "goal_switch_2"));
+                RecordBeaconVisit();
             }
-            bool waiting = HasNextGoal && Vec2.Distance(Position, Goal) <= s.arrivalRadius;
+            bool waiting = HasNextGoal && AtGoal;
             double direct = Vec2.Distance(Position, Goal) < 1e-10 ? Heading : Angles.Heading(Goal - Position);
             ReferenceHeading = waiting ? Heading : navigator.Reference(Position, Heading, Goal, Definition);
             double error = Angles.Wrap(ReferenceHeading - Heading);
@@ -192,13 +224,14 @@ namespace NpcLab.Core
             else { beforeError += Math.Abs(error) * dt; beforeTime += dt; }
             if (GoalSwitched && !(GoalStage == 1 ? ReorientationSeconds : SecondReorientationSeconds).HasValue)
             {
-                if (Math.Abs(error) < s.reorientDegrees)
+                if (Math.Abs(error) < s.reorientDegrees && (!Definition.HasThirdGoal || !waiting))
                 {
                     if (double.IsNaN(inBandSince)) inBandSince = time;
                     if (time + dt - inBandSince + 1e-10 >= s.reorientDwell)
                     {
-                        if (GoalStage == 1) ReorientationSeconds = Math.Max(0, inBandSince - Definition.goalChangeSeconds);
-                        else SecondReorientationSeconds = Math.Max(0, inBandSince - Definition.secondChangeSeconds);
+                        double response = Math.Max(0, inBandSince - activatedAt[GoalStage].Value);
+                        if (GoalStage == 1) ReorientationSeconds = response;
+                        else SecondReorientationSeconds = response;
                     }
                 }
                 else inBandSince = double.NaN;
@@ -210,6 +243,7 @@ namespace NpcLab.Core
             previousContacts.Clear(); previousContacts.UnionWith(contacts);
             RouteLength += Vec2.Distance(Position, next); Position = next;
             steps++; Elapsed = Math.Min(steps * s.dt, s.maxSeconds);
+            RecordBeaconVisit();
             if (!Angles.Finite(Heading) || !Angles.Finite(Position.x) || !Angles.Finite(Position.z))
                 throw new ArithmeticException("Non-finite simulation state.");
             bool finalGoal = !HasNextGoal;

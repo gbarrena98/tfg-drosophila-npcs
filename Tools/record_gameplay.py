@@ -125,20 +125,23 @@ def demonstration(w, film):
     choose(1135)
     w.click(160, 674)
     film.clip(5, 'C · Primera baliza',
-              ['La bandera verde señala el objetivo activo. En este relevo',
-               'la meta cambia a los 10 s y a los 16 s de simulación.'])
+              ['La bandera verde señala el objetivo activo. Ambos deben entrar',
+               'en el círculo de cada baliza para abrir la siguiente.'])
     wait_for(lambda: w.goal_is_green(.8, -6.5), 'M2 was not seen in the recording.', 24)
     film.clip(4, 'C · Segunda baliza',
               ['A los 10 s se activa M2. Los dos NPC dan la vuelta y tratan',
                'de recuperar el rumbo hacia la nueva posición.'])
+    film.clip(8, 'C · Paso por M2',
+              ['El proporcional llega primero y espera dentro del círculo.',
+               'M3 se abre cuando también llega el PFL3.'])
     wait_for(lambda: w.goal_is_green(4.5, 7), 'M3 was not seen in the recording.', 20)
     film.clip(5, 'C · Última baliza',
-              ['A los 16 s se activa M3 aunque aún estén camino de M2.',
-               'Solo la llegada a la última baliza completa la carrera.'])
+              ['Los dos han tocado M2. Ahora deben alcanzar la tercera baliza.',
+               'El tiempo de llegada se registra al entrar en ese último círculo.'])
     results()
     film.clip(5, 'C · Reorientación',
-              ['La última columna mide la respuesta a cada cambio. En M2 el',
-               'proporcional se orienta antes, pero el PFL3 llega primero a M3.'])
+              ['Ambos han tocado las tres balizas. Compara el tiempo de llegada',
+               'con el que cada NPC tardó en orientarse tras cada cambio.'])
     home()
     w.click(220, 470)
     film.clip(7, 'Taller de obstáculos',
@@ -147,8 +150,8 @@ def demonstration(w, film):
     w.click(155, 815)
     w.click(510, 470)
     film.clip(7, 'Editor de metas',
-              ['Selecciona M3, pulsa en la pista y ajusta el segundo de activación.',
-               'Al retrasarla das más tiempo para alcanzar M2.'], edit_beacon)
+              ['Selecciona M3, pulsa en la pista y ajusta su tiempo mínimo.',
+               'También en modo libre el relevo espera a los dos NPC.'], edit_beacon)
     w.click(155, 661)
     w.click(155, 639)
     results()

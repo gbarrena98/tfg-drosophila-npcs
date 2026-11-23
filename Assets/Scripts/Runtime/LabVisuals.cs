@@ -188,7 +188,7 @@ namespace NpcLab.Runtime
                 app.EnterGuide();
             if (CircuitCard(510,"B  ·  Zigzag de obstáculos","Seis obstáculos, una bandera. Compara por qué lado pasa cada NPC."))
                 app.EnterGuide(ScenarioKind.Obstacles);
-            if (CircuitCard(954,"C  ·  Relevo de balizas","La meta cambia a los 10 y 16 s. Sigue a los NPC cuando tengan que volver a girar."))
+            if (CircuitCard(954,"C  ·  Relevo de balizas","Sigue a los dos NPC por tres balizas. Cada relevo espera a que lleguen ambos."))
                 app.EnterGuide(ScenarioKind.MovingGoal);
         }
     }

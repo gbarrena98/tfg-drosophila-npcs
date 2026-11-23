@@ -70,3 +70,8 @@ La [release v0.2.0-pec2](https://github.com/gbarrena98/tfg-drosophila-npcs/relea
 - Accesibilidad revisada en diseño mediante etiquetas, colores y atajos básicos; no se ha validado compatibilidad con lector de pantalla ni navegación completa por teclado.
 - Las configuraciones finales, métricas confirmatorias y criterios estadísticos se fijarán antes de la evaluación final, con semillas reservadas.
 
+## Relevo de tres balizas en la PEC3
+
+El reto C-RELEVO y el editor C-TALLER exigen el paso de cada NPC por el círculo de M1 y por el de M2. Las 25 comprobaciones del núcleo incluyen una salida que agota el tiempo sin completar M1, un circuito libre que retrasa M3 y la ejecución de la pareja en orden inverso. El ensayo de Windows contrasta, para cada controlador, la posición en la traza en el instante del relevo con el radio de la baliza anterior. También reconstruye la latencia de reorientación a partir del cambio efectivo.
+
+En C-RELEVO, con rumbo 0°, el proporcional toca M2 a los 19,26 s y el PFL3 a los 20,42 s. Ambos reciben M3 a los 20,42 s. El piloto original de dos metas conserva su cambio común a los 10 s.

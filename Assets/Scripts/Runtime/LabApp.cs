@@ -12,7 +12,7 @@ namespace NpcLab.Runtime
 
     public sealed class LabApp : MonoBehaviour
     {
-        public const string AppVersion = "0.3.0-pec3";
+        public const string AppVersion = "0.3.1-pec3";
         public const string HeadingRangeHint = "Indica un ángulo entre −180° y 180°.";
         public static readonly Rect GuideArena = new Rect(340, 112, 712, 612);
         public static readonly Rect WorkshopArena = new Rect(344, 139, 728, 652);
@@ -185,7 +185,7 @@ namespace NpcLab.Runtime
                 return;
             }
             while (Math.Max(demo[0].Elapsed,demo[1].Elapsed)<demoTime && (!demo[0].Finished || !demo[1].Finished))
-                foreach(var e in demo) e.Step();
+                TrialEngine.StepTogether(demo);
             World.ShowTrails=true; World.ShowReference=false;
             World.Update(demo);
         }
@@ -246,12 +246,7 @@ namespace NpcLab.Runtime
         void FixedUpdate()
         {
             if (ScreenState != LabScreen.Running) return;
-            bool finished = true;
-            foreach (TrialEngine engine in Engines)
-            {
-                engine.Step();
-                if (!engine.Finished) finished = false;
-            }
+            bool finished = TrialEngine.StepTogether(Engines);
             if (Engines.Count==2) PeakSeparation=Math.Max(PeakSeparation,Vec2.Distance(Engines[0].Position,Engines[1].Position));
             if (finished) FinishTrial();
         }

@@ -59,7 +59,7 @@ jobs:
     concurrency: pec3-publicacion
     env:
       GH_TOKEN: ${{ github.token }}
-      TAG: v0.3.0-pec3
+      TAG: v0.3.1-pec3
     steps:
       - name: Localizar los dos archivos verificados en esta revisión
         id: build
@@ -90,7 +90,7 @@ jobs:
           if ! gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft \
               --title "PEC3 · Arena de navegación de NPC" \
-              --notes "Alfa jugable del TFG de Germán Barrena Alonso (UOC). Incluye tres circuitos, rumbo de salida manual, dos editores y exportación de trayectorias. Para jugar, extrae Windows.zip y abre DrosophilaNavigationLab.exe. La demostración recorre los tres modos desde el mismo ejecutable."
+              --notes "Alfa jugable del TFG de Germán Barrena Alonso (UOC). Incluye los tres circuitos, dos editores y el relevo revisado. Ambos NPC deben tocar M1 y M2 para llegar a M3. Para jugar, extrae Windows.zip y abre DrosophilaNavigationLab.exe. La demostración recorre los tres modos desde el mismo ejecutable."
           fi
           test "$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" entrega/Windows.zip entrega/Demostracion_PEC3.mp4 --clobber

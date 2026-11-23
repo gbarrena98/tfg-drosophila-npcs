@@ -4,7 +4,7 @@ El proyecto fuente está publicado en [https://github.com/gbarrena98/tfg-drosoph
 
 ## Versión PEC3
 
-La [versión v0.3.0-pec3](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/tag/v0.3.0-pec3) reúne el [ejecutable de Windows](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.3.0-pec3/Windows.zip) y la [demostración de juego](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.3.0-pec3/Demostracion_PEC3.mp4). Incluye los circuitos A, B y C, los dos editores y el piloto original. Las pruebas de interfaz utilizan el mismo ZIP del que se graba la demostración.
+La [versión v0.3.1-pec3](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/tag/v0.3.1-pec3) reúne el [ejecutable de Windows](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.3.1-pec3/Windows.zip) y la [demostración de juego](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.3.1-pec3/Demostracion_PEC3.mp4). Incluye los circuitos A, B y C, los dos editores y el piloto original. Las pruebas de interfaz utilizan el mismo ZIP del que se graba la demostración.
 
 ## Versión PEC2
 

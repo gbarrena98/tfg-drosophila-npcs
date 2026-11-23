@@ -1,6 +1,6 @@
 DROSOPHILA NAVIGATION LAB
 TFG de Germán Barrena Alonso, UOC
-PEC3 · Alfa jugable · Versión 0.3.0-pec3
+PEC3 · Alfa jugable · Versión 0.3.1-pec3
 
 Extraer todos los archivos del ZIP y abrir DrosophilaNavigationLab.exe.
 Conservar UnityPlayer.dll y DrosophilaNavigationLab_Data junto al ejecutable.
@@ -9,9 +9,10 @@ Las tarjetas A, B y C abren los tres circuitos. A abre el espacio A-00.
 Compara los dos NPC con la meta de frente, de lado,
 de espaldas o casi de espaldas. En A-00, ambos conocen la dirección de la meta.
 Con una diferencia inicial de 180°, la orden de giro del PFL3 es casi nula.
-B abre un circuito en zigzag con seis obstáculos y C el relevo de tres balizas. En C el
-objetivo cambia a los 10 y 16 s aunque falte recorrido hasta la baliza anterior.
-Solo la última baliza cuenta como llegada. Desde Reto / Piloto puedes reproducir B-00
+B abre un circuito en zigzag con seis obstáculos y C el relevo de tres balizas. Los dos NPC deben
+tocar el círculo de M1 y después el de M2. El primero espera al segundo.
+M2 puede activarse desde los 10 s y M3 desde los 16 s. La llegada a M3
+decide la carrera. Desde Reto / Piloto puedes reproducir B-00
 y C-00. Puedes elegir un pronóstico antes de la salida. Una diferencia de
 hasta 0,10 s cuenta como empate en el juego. En los tres circuitos y en los
 editores, escribe el ángulo de salida de los dos NPC entre −180° y 180°.
@@ -25,8 +26,8 @@ Los diseños del taller se identifican por separado en la exportación.
 
 Desde C, pulsa Editar metas para preparar un relevo propio. Selecciona una
 baliza y pulsa en la pista, o arrastra su marcador. M1 está activa desde
-la salida. Los botones − y + ajustan los segundos de activación de M2 y M3.
-Retrasa M3 si quieres dar más tiempo para llegar a M2.
+la salida. Los botones − y + ajustan los tiempos mínimos de M2 y M3.
+Cada relevo también espera a que ambos NPC toquen el círculo anterior.
 Guardar diseño conserva tu relevo y Probar con ambos arranca la carrera.
 El juego guarda los diseños de B y de C de forma independiente.
 
