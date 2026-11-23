@@ -12,7 +12,8 @@ namespace NpcLab.Runtime
 
     public sealed class LabApp : MonoBehaviour
     {
-        public const string AppVersion = "0.3.0-alpha.4";
+        public const string AppVersion = "0.3.0-pec3";
+        public const string HeadingRangeHint = "Indica un ángulo entre −180° y 180°.";
         public static readonly Rect GuideArena = new Rect(340, 112, 712, 612);
         public static readonly Rect WorkshopArena = new Rect(344, 139, 728, 652);
         public static readonly Rect MenuArena = new Rect(790, 163, 578, 348);
@@ -30,6 +31,7 @@ namespace NpcLab.Runtime
         public double PeakSeparation { get; private set; }
         public int? Prediction { get; set; }
         public double GuideHeading { get; private set; }
+        public string GuideHeadingInput { get; private set; }
         public TrialEngine[] PreviousGuideTrial { get; private set; }
         public int PlaybackSpeed => IsGuided ? guideSpeed : VisualSpeed;
         public bool ResultsSaved { get; private set; }
@@ -75,7 +77,7 @@ namespace NpcLab.Runtime
             ScenarioIndex = Mathf.Clamp(ScenarioIndex, 0, 2);
             string id = (char)('A' + ScenarioIndex) + "-" + ConfigurationIndex.ToString("D2", CultureInfo.InvariantCulture);
             freeSelection = ReadConfiguration(id);
-            HeadingInput = freeSelection.initialHeading.ToString("0.###", CultureInfo.InvariantCulture);
+            HeadingInput = HeadingText(freeSelection.initialHeading);
             Notice = "";
             Preview();
         }
@@ -88,6 +90,7 @@ namespace NpcLab.Runtime
             else guideSelection = ReadConfiguration(((char)('A' + (int)scenario)).ToString() + "-00");
             IsGuided = true;
             GuideHeading = guideSelection.initialHeading;
+            GuideHeadingInput = HeadingText(GuideHeading);
             guideSpeed = 1;
             Engines.Clear();
             PreviousGuideTrial = null;
@@ -108,7 +111,30 @@ namespace NpcLab.Runtime
         public void SetGuideHeading(double heading)
         {
             GuideHeading = heading;
+            GuideHeadingInput = HeadingText(heading);
+            Notice = "";
             World.SetStartingHeading(Selected.start, heading);
+        }
+
+        public static string HeadingText(double heading) => heading.ToString("0.######", CultureInfo.InvariantCulture);
+
+        public static bool TryReadHeading(string text, out double value)
+        {
+            return double.TryParse(text.Replace('−','-').Replace(',','.'), NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                && Angles.Finite(value) && value >= -180 && value <= 180;
+        }
+
+        public void EditGuideHeading(string text)
+        {
+            GuideHeadingInput = text;
+            if (!TryReadHeading(text, out double value))
+            {
+                Notice = HeadingRangeHint;
+                return;
+            }
+            GuideHeading = value;
+            Notice = "";
+            World.SetStartingHeading(Selected.start,value);
         }
 
         public void Preview()
@@ -130,6 +156,7 @@ namespace NpcLab.Runtime
         {
             World.Rebuild(Workshop.Draft, new[] {ControllerKind.Proportional, ControllerKind.Pfl3});
             World.SetTopView(true);
+            World.SetStartingHeading(Workshop.Draft.start,Workshop.Draft.initialHeading);
         }
 
         public void PlayWorkshop()
@@ -175,18 +202,19 @@ namespace NpcLab.Runtime
             try
             {
                 TrialDefinition definition = Selected.Copy();
-                double heading = GuideHeading;
-                if (!IsGuided && (!double.TryParse(HeadingInput.Replace(',', '.'), NumberStyles.Float,
-                        CultureInfo.InvariantCulture, out heading) || !Angles.Finite(heading) || heading < -180 || heading > 180))
+                if (!TryReadHeading(IsGuided ? GuideHeadingInput : HeadingInput,out double heading))
                 {
-                    Notice = "El rumbo debe estar entre −180 y 180 grados.";
+                    Notice = HeadingRangeHint;
                     return;
                 }
-                if (Math.Abs(Angles.Wrap(heading - definition.initialHeading)) > .001)
+                if (IsGuided) heading = GuideHeading;
+                else if (HeadingInput == HeadingText(definition.initialHeading)) heading = definition.initialHeading;
+                if (heading != definition.initialHeading)
                 {
                     definition.initialHeading = heading;
                     definition.configurationId += "-custom";
                     if (!IsGuided || Variant==GuideVariant.Pilot) definition.datasetRole = "development-custom";
+                    else if (Variant==GuideVariant.Challenge) definition.datasetRole = "showcase-custom";
                 }
                 definition.Validate();
                 List<ControllerKind> kinds = Kinds();

@@ -137,7 +137,7 @@ namespace NpcLab.Runtime
         void DrawInstructions()
         {
             Box(new Rect(0,0,1440,900),background);Header("Instrucciones");Text("Cómo jugar",80,130,1200,60,title);
-            Card("Elige un circuito","A enseña a orientar los NPC. B propone un eslalon y C activa tres balizas a los 0, 10 y 16 s. En B y C puedes volver al Piloto.",80,250,410,205,false);
+            Card("Elige un circuito","A permite comparar el giro. B propone un zigzag y C cambia de meta por tiempo. Usa un rumbo predefinido o escribe tu propio ángulo de salida.",80,250,410,205,false);
             Card("Pronostica la llegada","Elige qué NPC llegará primero o apuesta por un empate de hasta 0,10 s. Puedes pausar y aislar un recorrido durante la carrera.",515,250,410,205,false);
             Card("Diseña tu circuito","En B puedes dibujar y mover obstáculos. En C abre «Editar metas», selecciona una baliza y pulsa en el mapa para colocarla. Guarda y prueba tu diseño.",950,250,410,205,false);
             Text("Enter: iniciar · Espacio / Esc: pausa y continuación · R: repetir desde resultados",80,510,1270,50,heading);

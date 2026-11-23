@@ -157,7 +157,7 @@ namespace NpcLab.Runtime
             Surface(new Rect(frame.x,frame.y,frame.width,53),panel,border,8);
             Box(new Rect(785,151,588,12),panel);
             FrameEdges(frame,border,2,2);
-            Text("Circuito B  /  Eslalon",804,124,405,38,heading);
+            Text("Circuito B  /  Zigzag",804,124,405,38,heading);
             Rounded(new Rect(1256,134,8,8),LabWorld.Cyan,4);
             Text("En pista",1273,123,98,34,small);
             Surface(new Rect(783,511,592,94),panel,border,8);
@@ -186,7 +186,7 @@ namespace NpcLab.Runtime
             if (Button("Créditos y fuentes",1164,649,211,38)) app.ChangeScreen(LabScreen.Credits);
             if (CircuitCard(66,"A  ·  Espacio abierto","Gira la salida y observa quién alcanza la meta de frente, de lado o de espaldas."))
                 app.EnterGuide();
-            if (CircuitCard(510,"B  ·  Eslalon","Seis obstáculos, una bandera. Compara por qué lado pasa cada NPC."))
+            if (CircuitCard(510,"B  ·  Zigzag de obstáculos","Seis obstáculos, una bandera. Compara por qué lado pasa cada NPC."))
                 app.EnterGuide(ScenarioKind.Obstacles);
             if (CircuitCard(954,"C  ·  Relevo de balizas","La meta cambia a los 10 y 16 s. Sigue a los NPC cuando tengan que volver a girar."))
                 app.EnterGuide(ScenarioKind.MovingGoal);

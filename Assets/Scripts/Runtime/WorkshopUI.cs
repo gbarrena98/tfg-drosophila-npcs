@@ -12,6 +12,7 @@ namespace NpcLab.Runtime
         readonly List<Vec2> outline = new List<Vec2>();
         bool dragging;
         int selectedGoal;
+        string workshopHeading;
         Vec2 grabOffset, ghost;
         static readonly string[] ToolNames={"Mover pieza","Disco","Bloque rectangular","Polígono libre"};
         ArenaWorkshop Workshop => app.Workshop;
@@ -19,6 +20,7 @@ namespace NpcLab.Runtime
         public void ResetWorkshopTools()
         {
             tool=WorkshopTool.Select; outline.Clear(); dragging=false; selectedGoal=0;
+            workshopHeading=LabApp.HeadingText(Workshop.Draft.initialHeading);
         }
 
         static Vector2 EditPoint(Vec2 p)
@@ -135,16 +137,30 @@ namespace NpcLab.Runtime
             else for(int i=0;i<ToolNames.Length;++i)
                 if(Button(ToolNames[i],45,270+53*i,258,44,i==(int)tool)) OpenTool((WorkshopTool)i);
             Box(new Rect(44,500,258,2),edge);
-            Text(relay ? "Los dos NPC reciben las mismas metas en los mismos instantes." :
-                "Las piezas tienen el mismo contorno para ambos NPC.",45,519,246,80,small);
+            string angle=ManualHeadingField(workshopHeading,515);
+            bool validAngle=LabApp.TryReadHeading(angle,out double headingValue);
+            if (angle!=workshopHeading)
+            {
+                workshopHeading=angle;
+                Workshop.Message=validAngle ? "" : LabApp.HeadingRangeHint;
+                if (validAngle)
+                {
+                    Workshop.Draft.initialHeading=headingValue;
+                    app.World.SetStartingHeading(Workshop.Draft.start,headingValue);
+                }
+            }
+            Text(relay ? "Los cambios siguen el horario común de las tres balizas." :
+                "Las piezas tienen el mismo contorno para ambos NPC.",45,568,252,56,small);
             if(Button("Probar con ambos",45,632,258,56,true))
             {
-                if(outline.Count>0) Workshop.Message="Cierra el polígono o cancela el dibujo para probar.";
+                if(!validAngle) Workshop.Message=LabApp.HeadingRangeHint;
+                else if(outline.Count>0) Workshop.Message="Cierra el polígono o cancela el dibujo para probar.";
                 else { app.PlayWorkshop(); return; }
             }
             if(Button("Guardar diseño",45,705,258,45))
             {
-                if(outline.Count>0) Workshop.Message="Cierra el polígono antes de guardar.";
+                if(!validAngle) Workshop.Message=LabApp.HeadingRangeHint;
+                else if(outline.Count>0) Workshop.Message="Cierra el polígono antes de guardar.";
                 else Workshop.Save();
             }
             if(Button("Menú principal",45,794,258,44)) { app.ChangeScreen(LabScreen.Title); return; }
@@ -225,7 +241,7 @@ namespace NpcLab.Runtime
             Text("Orden del relevo",1105,463,283,43,heading);
             for (int i=0;i<3;++i)
                 Text("M"+(i+1)+"     "+F(GoalTime(i),"0")+" s",1105,524+37*i,278,32,readout);
-            Text("La bandera cambia sola en esos instantes. La llegada se mide en M3.",1105,661,278,99,small);
+            Text("M3 se activa aunque los NPC sigan de camino a M2. Retrasa M3 para darles más tiempo.",1105,661,278,99,small);
         }
 
         string WorkshopHint()

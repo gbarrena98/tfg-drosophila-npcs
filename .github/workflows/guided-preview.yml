@@ -1,14 +1,21 @@
-name: Probar la alfa jugable en Windows
+name: Verificar y publicar la PEC3
 on:
   push:
-    branches: [pec3/bloque-2]
+    branches: [pec3/bloque-2, main]
+    paths:
+      - '.github/workflows/guided-preview.yml'
+      - 'Assets/**'
+      - 'Docs/LEEME_PLAYER.txt'
+      - 'Tools/**'
   workflow_dispatch:
 permissions:
   contents: read
+
 jobs:
   windows:
+    if: github.ref == 'refs/heads/pec3/bloque-2'
     runs-on: windows-2025
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v7
         with:
@@ -16,21 +23,76 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.403'
-      - name: Compilar y empaquetar el Player de prueba
-        run: python Tools/build_guided_preview.py --output Builds/PEC3_Arena_Windows_alpha4.zip
-      - name: Probar desde el menú y comprobar los resultados exportados
+      - name: Compilar el juego y comprobar el núcleo
         run: |
-          python -m pip install --quiet Pillow
-          python Tools/test_guided_player.py Builds/PEC3_Arena_Windows_alpha4.zip
+          python Tools/validate_repository.py
+          dotnet run --project Tools/CoreHarness -- check --root .
+          python Tools/build_guided_preview.py --output Builds/Windows.zip
+      - name: Probar los circuitos y los editores desde el menú
+        run: |
+          python -m pip install --quiet Pillow imageio-ffmpeg==0.6.0
+          python Tools/test_guided_player.py Builds/Windows.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Capturas-alfa
           path: Builds/guide-checks/
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 30
+      - name: Grabar la demostración desde el ejecutable verificado
+        run: python Tools/record_gameplay.py Builds/Windows.zip Builds/Demostracion_PEC3.mp4
       - uses: actions/upload-artifact@v4
         with:
-          name: PEC3-Arena-Windows-alpha4
-          path: Builds/PEC3_Arena_Windows_alpha4.zip
+          name: PEC3-entrega
+          path: |
+            Builds/Windows.zip
+            Builds/Demostracion_PEC3.mp4
+          if-no-files-found: error
           retention-days: 30
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    concurrency: pec3-publicacion
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: v0.3.0-pec3
+    steps:
+      - name: Localizar los dos archivos verificados en esta revisión
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null || true)" == "false" ]]; then
+            exit 0
+          fi
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/guided-preview.yml/runs"
+          run_id=$(gh api --method GET "$endpoint" -f branch=pec3/bloque-2 -f head_sha="$GITHUB_SHA" -f status=success --jq '.workflow_runs[0].id // empty')
+          test -n "$run_id"
+          echo "run=$run_id" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        if: steps.build.outputs.run != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.build.outputs.run }}
+          name: PEC3-entrega
+          path: entrega
+      - name: Publicar el ZIP y el vídeo
+        if: steps.build.outputs.run != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s entrega/Windows.zip && test -s entrega/Demostracion_PEC3.mp4
+          unzip -tq entrega/Windows.zip
+          if ! gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft \
+              --title "PEC3 · Arena de navegación de NPC" \
+              --notes "Alfa jugable del TFG de Germán Barrena Alonso (UOC). Incluye tres circuitos, rumbo de salida manual, dos editores y exportación de trayectorias. Para jugar, extrae Windows.zip y abre DrosophilaNavigationLab.exe. La demostración recorre los tres modos desde el mismo ejecutable."
+          fi
+          test "$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" entrega/Windows.zip entrega/Demostracion_PEC3.mp4 --clobber
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json url --jq .url >> "$GITHUB_STEP_SUMMARY"

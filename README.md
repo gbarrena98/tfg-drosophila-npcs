@@ -6,15 +6,17 @@ El proyecto compara dos formas de orientar un agente hacia una meta: un controla
 
 ## Alfa jugable de la PEC3
 
+[Descargar el juego para Windows](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.3.0-pec3/Windows.zip) · [Demostración en vídeo](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/download/v0.3.0-pec3/Demostracion_PEC3.mp4) · [Versión v0.3.0-pec3](https://github.com/gbarrena98/tfg-drosophila-npcs/releases/tag/v0.3.0-pec3)
+
 Las tres tarjetas del menú abren los circuitos A, B y C. También se pueden abrir con las teclas A, B y C. En **A · Espacio abierto**, elige el rumbo, lanza la comparación y repite para ver el tiempo de cada NPC junto al de su intento anterior. A −135° la meta queda exactamente detrás del agente. Ambos controladores reciben su dirección. En este caso las señales laterales del modelo PFL3 se equilibran y el giro es prácticamente nulo. **Casi de espaldas** reduce a 179° la diferencia inicial para explorar esa simetría.
 
-**B · Eslalon de obstáculos** abre B-SLALOM, un circuito fijo con cuatro discos y dos barreras rectangulares. La pista muestra los dos recorridos y la distancia máxima que ha separado a los NPC en el mismo instante. **C · Relevo de balizas** abre C-RELEVO. La segunda baliza se activa a los 10 s y la tercera a los 16 s. La tabla de llegada y el archivo `goal_responses.csv` distinguen el tiempo de reorientación tras cada cambio. Los botones **Reto** y **Piloto** permiten alternar estos circuitos con B-00 y C-00. En la preparación puedes pronosticar una victoria o un empate técnico (hasta 0,10 s). El pronóstico es opcional.
+**B · Zigzag de obstáculos** abre B-SLALOM, un circuito fijo con cuatro discos y dos barreras rectangulares. La pista muestra los dos recorridos y la distancia máxima que ha separado a los NPC en el mismo instante. **C · Relevo de balizas** abre C-RELEVO. La segunda baliza se activa a los 10 s y la tercera a los 16 s, aunque los NPC sigan en camino hacia la anterior. Solo la llegada a la última completa el ensayo. La tabla de llegada y el archivo `goal_responses.csv` distinguen el tiempo de reorientación tras cada cambio. Los botones **Reto** y **Piloto** permiten alternar estos circuitos con B-00 y C-00. En la preparación puedes pronosticar una victoria o un empate técnico (hasta 0,10 s). El pronóstico es opcional. En los tres circuitos y en ambos editores puedes introducir el mismo ángulo inicial para los dos NPC, entre −180° y 180°, con coma o punto decimal. La flecha muestra el rumbo elegido.
 
-En **Taller de obstáculos** se construye una arena B con hasta 32 piezas. Se pueden colocar discos, cambiar las dimensiones y el giro de bloques o dibujar polígonos simples, incluso cóncavos, de 3 a 16 vértices. Los contornos visibles se utilizan para la colisión y para la evitación. Una vez colocada, se puede seleccionar, arrastrar, redimensionar o eliminar cada pieza. **Guardar diseño** guarda la arena en el equipo y **Probar con ambos** ejecuta la misma copia para los dos NPC. En resultados, **Volver al taller** recupera el diseño para seguir editándolo.
+En **Taller de obstáculos** se construye una arena B con hasta 32 piezas. Se pueden colocar discos, cambiar las dimensiones y el giro de bloques o dibujar polígonos simples, incluso cóncavos, de 3 a 16 vértices. Los contornos visibles se utilizan para la colisión y para la evitación. Una vez colocada, se puede seleccionar, arrastrar, redimensionar o eliminar cada pieza. **Guardar diseño** guarda la arena en el equipo y **Probar con ambos** ejecuta la misma copia para los dos NPC. En resultados, **Volver al editor** recupera el diseño para seguir editándolo.
 
 En **C · Relevo de balizas**, el reto fijo cambia la meta automáticamente. **Editar metas** abre un diseño propio. Selecciona M1, M2 o M3 y pulsa en la pista, o arrastra una baliza. M1 está activa desde la salida. Para M2 y M3 puedes elegir el segundo de activación con los botones − y +. **Guardar diseño** conserva este relevo tras cerrar el juego. El diseño de B se guarda en otro archivo.
 
-**Ensayos del piloto** conserva las 90 configuraciones del piloto. Las carreras B-SLALOM y C-RELEVO llevan la etiqueta `showcase-challenge`. Los circuitos de ambos editores se identifican por el contenido del diseño y llevan `free-workshop`. El apartado 3.8 de la memoria corresponde al piloto de desarrollo. **Mostrar en la arena** permite aislar un recorrido mientras ambos agentes continúan. La ilustración del NPC es original y la portada muestra una carrera del propio motor.
+**Ensayos del piloto** conserva las 90 configuraciones del piloto. Las carreras B-SLALOM y C-RELEVO llevan la etiqueta `showcase-challenge` con su rumbo nominal y `showcase-custom` si se cambia. Los circuitos de ambos editores se identifican por el contenido del diseño y llevan `free-workshop`. El apartado 3.8 de la memoria corresponde al piloto de desarrollo. **Mostrar en la arena** permite aislar un recorrido mientras ambos agentes continúan. La ilustración del NPC es original y la portada muestra una carrera del propio motor.
 
 ## Versión publicada de la PEC2
 
@@ -29,11 +31,11 @@ La versión de referencia es **Unity 6000.3.0f1**, con el renderizador integrado
 1. Clonar el repositorio o descomprimir el proyecto.
 2. En Unity Hub, seleccionar **Add → Add project from disk** y añadir la carpeta que contiene `Assets`, `Packages` y `ProjectSettings`.
 3. Esperar a que termine la importación y abrir **TFG → Abrir laboratorio**. La escena también está en `Assets/Scenes/NavigationLab.unity`.
-4. Abrir la pestaña **Game**, pulsar **Play** y entrar en **Primer ensayo** o **Configuración libre**.
+4. Abrir la pestaña **Game**, pulsar **Play** y elegir una tarjeta A, B o C, un editor o **Ensayos del piloto**.
 
 Se recomienda una ventana de 1440 × 900 o mayor. Si se usa otra versión de Unity, registrar el cambio y repetir las comprobaciones.
 
-## Escenarios y controles
+## Escenarios del piloto y controles
 
 | Escenario | Descripción |
 | --- | --- |
@@ -79,7 +81,9 @@ También se pueden ejecutar sin Unity, con **.NET SDK 10**, desde la raíz del p
 dotnet run --project Tools/CoreHarness -- check --root .
 ```
 
-Los informes incluidos recogen 20 comprobaciones del núcleo, un piloto de 180 ejecuciones y la compilación de los scripts contra la API de Unity. Las comprobaciones locales en el editor y el Player se registran en [Docs/ACEPTACION_UNITY.csv](Docs/ACEPTACION_UNITY.csv), junto con el informe del núcleo ejecutado desde Unity. La versión para Windows está publicada y se ha comprobado la integridad del ZIP distribuido. El piloto utiliza configuraciones de desarrollo. La evaluación final del TFG se realizará con configuraciones reservadas.
+Los informes de la PEC2 recogen 20 comprobaciones del núcleo, un piloto de 180 ejecuciones y la compilación de los scripts contra la API de Unity. Las comprobaciones locales en el editor y el Player se registran en [Docs/ACEPTACION_UNITY.csv](Docs/ACEPTACION_UNITY.csv), junto con el informe del núcleo ejecutado desde Unity. La versión para Windows está publicada y se ha comprobado la integridad del ZIP distribuido. El piloto utiliza configuraciones de desarrollo. La evaluación final del TFG se realizará con configuraciones reservadas.
+
+La PEC3 amplía el conjunto a 23 comprobaciones del núcleo y prueba la navegación por menús, los rumbos manuales, el guardado de ambos editores y los CSV desde el ejecutable distribuido.
 
 El detalle de las pruebas y sus límites está en [Docs/VALIDACION.md](Docs/VALIDACION.md).
 

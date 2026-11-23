@@ -89,6 +89,20 @@ class GameWindow:
         user32.mouse_event(4,0,0,0,0)
         time.sleep(.35)
 
+    def set_angle(self, text, workshop=False):
+        self.click(235,536 if workshop else 620)
+        def key(code, released=False):
+            user32.keybd_event(code,user32.MapVirtualKeyW(code,0),2 if released else 0,0)
+            time.sleep(.065)
+        key(0x11)
+        key(ord('A'))
+        key(ord('A'),True)
+        key(0x11,True)
+        for char in text:
+            code={'-':0xBD,',':0xBC,'.':0xBE}.get(char,ord(char))
+            key(code)
+            key(code,True)
+
     def resize(self,width,height):
         rect=wintypes.RECT()
         user32.GetWindowRect(self.hwnd,ctypes.byref(rect))
@@ -246,6 +260,8 @@ def check_challenges(w,used):
         assert row['state']=='Success'
         ev=csv_rows(folder/f'events_{k}.csv')
         assert [(v['event'],float(v['time_s'])) for v in ev if v['event'].startswith('goal_switch')]==[('goal_switch',10),('goal_switch_2',16)]
+        stage2=[s for s in csv_rows(folder/f'trace_{k}.csv') if 10<=float(s['time_s'])<16]
+        assert min(math.hypot(float(s['x_m'])-case['secondGoal']['x'],float(s['z_m'])-case['secondGoal']['z']) for s in stage2)>case['settings']['arrivalRadius']
     wait_for(lambda:w.primary_visible(65,540),'Relay results were not drawn.')
     w.save('17-relevo-meta')
     return b,c
@@ -308,12 +324,13 @@ def check_goal_editor(w, used):
     w.click(162,396)
     w.click(*at(5,5))
     w.click(1130,364)
+    w.set_angle('-25,5',workshop=True)
     w.click(155,727)
     w.save('19-editor-metas')
     w.click(155,661)
     w.click(155,639)
     folder,d,rows=wait_for(lambda:session_matches(used,None,'workshop','C-TALLER-*'),'Custom relay did not finish.')
-    assert d['datasetRole']=='free-workshop' and d['goalChangeSeconds']==8 and d['secondChangeSeconds']==15
+    assert d['datasetRole']=='free-workshop' and d['goalChangeSeconds']==8 and d['secondChangeSeconds']==15 and d['initialHeading']==-25.5
     for key,(x,z) in zip(('goal','secondGoal','thirdGoal'),[(-3,4),(-4,-4),(5,5)]):
         assert abs(d[key]['x']-x)<.2 and abs(d[key]['z']-z)<.2, (key,d[key])
     saved=json.loads((TRIALS.parent/'arena-c.json').read_bytes())
@@ -334,6 +351,31 @@ def check_goal_editor(w, used):
     _,replay,_=wait_for(lambda:session_matches(used,None,'workshop','C-TALLER-*'),'Replay from goal editor did not finish.')
     assert replay['configurationId']==d['configurationId']
     return d
+
+
+def check_manual_headings(w,used):
+    cases=[(240,'A-00-custom','-37,5',-37.5,'development-custom'),
+           (720,'B-SLALOM-custom','27.25',27.25,'showcase-custom'),
+           (1140,'C-RELEVO-custom','180',180,'showcase-custom')]
+    for x,case,text,angle,role in cases:
+        wait_for(lambda:w.primary_visible(65,540),'Expected results before switching circuits.')
+        w.click(160,789)
+        w.click(x,771)
+        if x==240:
+            w.set_angle('181')
+            w.click(160,674)
+            assert w.primary_visible(65,665), 'Invalid angle started the trial.'
+        w.set_angle(text)
+        if x==240:
+            wait_for(lambda:w.heading_arrow_visible(angle),'The preview did not follow manual input.')
+            w.save('21-angulo-manual')
+        w.click(160,674)
+        time.sleep(.7)
+        w.click(160,698)
+        folder,config,rows=wait_for(lambda:session_matches(used,angle,'guided',case),'Manual heading was not exported: '+case)
+        assert config['datasetRole']==role
+        for kind in rows:
+            assert math.isclose(float(csv_rows(folder/f'trace_{kind}.csv')[0]['heading_deg']),angle,abs_tol=1e-8)
 
 
 def check_gui(archive):
@@ -434,6 +476,7 @@ def check_gui(archive):
             window.click(155,639)
             _,fixed,_=wait_for(lambda:session_matches(used,0,'guided','C-RELEVO'),'Fixed relay lost after editing.')
             assert fixed['goalChangeSeconds']==10 and fixed['secondChangeSeconds']==16 and fixed['goal']=={'x':0,'z':6.5}
+            check_manual_headings(window,used)
             print('PASS: three circuit entrances, both workshops, independent saves, timed relays, pilot and exports.', flush=True)
             report = {name: {key: {'state': row['state'], 'arrival_s': row['arrival_s']} for key, row in rows.items()}
                       for name, rows in [('lateral', first), ('hacia_meta', second), ('opuesto', opposite), ('casi_opuesto', near), ('obstaculos', obstacles), ('cambio_meta', changed_goal), ('libre', free), ('eslalon',slalom),('relevo',relay),('taller',workshop)]}

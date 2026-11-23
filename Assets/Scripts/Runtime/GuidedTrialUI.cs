@@ -28,7 +28,7 @@ namespace NpcLab.Runtime
 
         void DrawGuide()
         {
-            Header((Scenario == ScenarioKind.Open ? "Primer ensayo" : "Ensayo guiado") + "   /   "
+            Header((app.Variant == GuideVariant.Workshop ? "Circuito libre" : Scenario == ScenarioKind.Open ? "Primer ensayo" : "Ensayo guiado") + "   /   "
                 + app.Selected.configurationId + " · " + LabApp.ScenarioNames[app.Selected.scenario].Substring(4));
             LabScreen screen = app.ScreenState;
             bool preparing = screen == LabScreen.GuideSetup;
@@ -52,7 +52,7 @@ namespace NpcLab.Runtime
                 if (Scenario == ScenarioKind.Obstacles)
                     help = "Los números identifican las barreras. Sigue las dos trazadas hasta la bandera.";
                 else if (Scenario == ScenarioKind.MovingGoal)
-                    help = "La bandera verde marca la meta activa. Solo la última baliza cuenta para el tiempo de llegada.";
+                    help = "La bandera verde marca la meta activa. Si cambia durante el trayecto, ambos NPC giran hacia la nueva. Solo cuenta la llegada final.";
                 Text(help, 363, 805, 408, 64,small);
                 Text("Tu pronóstico  ·  empate hasta 0,10 s",809,762,578,35,small);
                 string[] options={"Proporcional","PFL3","Empate"};
@@ -84,10 +84,21 @@ namespace NpcLab.Runtime
             if (Scenario == ScenarioKind.Obstacles && Button("Taller de obstáculos",45,541,257,50))
             { app.EnterWorkshop(); return; }
 
+            string angle = ManualHeadingField(app.GuideHeadingInput,598);
+            if (angle != app.GuideHeadingInput) app.EditGuideHeading(angle);
             if (Button(app.Engines.Count > 0 ? "Lanzar de nuevo" : "Iniciar comparación", 45, 648, 257, 54, true))
                 app.StartTrial();
             if (Button("Volver al menú", 45, 717, 257, 46)) app.ChangeScreen(LabScreen.Title);
-            if (!string.IsNullOrEmpty(app.Notice) && !app.ResultsSaved) Text(app.Notice, 46, 780, 252, 81, small);
+            if (!string.IsNullOrEmpty(app.Notice) && (!app.ResultsSaved || app.Notice==LabApp.HeadingRangeHint))
+                Text(app.Notice, 46, 780, 252, 81, small);
+        }
+
+        string ManualHeadingField(string value, float y)
+        {
+            Text("Ángulo manual",46,y,131,22,small);
+            Text("−180° a 180°",46,y+20,132,22,caption);
+            GUI.SetNextControlName("rumbo-manual");
+            return GUI.TextField(new Rect(178,y,124,41),value,field);
         }
 
         void HeadingChoice(string label, double angle, float y)
@@ -173,8 +184,7 @@ namespace NpcLab.Runtime
                 case ScenarioKind.MovingGoal:
                     help = "La meta cambia automáticamente a los "+F(app.Selected.goalChangeSeconds,"0.#")+" s";
                     help += app.Selected.HasThirdGoal ? " y a los "+F(app.Selected.secondChangeSeconds,"0.#")+" s." : ".";
-                    help += preparing ? " En «Editar metas» puedes colocar tres balizas y elegir los tiempos de tu propio relevo." :
-                        " Observa cuánto tarda cada NPC en recuperar el rumbo hacia la bandera verde.";
+                    help += " Los NPC cambian de rumbo aunque sigan de camino a la baliza anterior.";
                     break;
                 default:
                     help = Opposite
